@@ -4,7 +4,7 @@ import os
 import os.path
 import csv
 
-from row import *
+from .row import *
 
 
 def set_database_filename(database_filename):
