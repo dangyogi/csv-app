@@ -1,0 +1,18 @@
+Attendance
+Month|Year|num_at_meeting|staff_at_breakfast|tickets_claimed
+1|2024|||
+2|2024|||99
+3|2024|21|12|70
+10|2025|5||
+11|2025|14|14|61
+
+Orders
+Date      |Item          |Qty|Supplier|Supplier_id
+2025-11-02|Bacon, 6"-10" | 1 |        |
+2025-11-02|Butter        | 1 |        |44
+
+Categories
+Event|Category|Type|Ticket_price
+meeting dinner|reimbursement|expense|
+breakfast|adv tickets|income|5
+breakfast|door tickets|income|6

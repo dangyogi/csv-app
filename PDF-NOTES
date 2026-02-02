@@ -1,0 +1,523 @@
+# PDF-NOTES
+
+Fonts:
+
+    Changing Fonts
+    
+    canvas.setFont(psfontname, size, leading = None) 
+        The setFont method changes the current text font to a given type and size. The leading parameter specifies
+        the distance down to move when advancing from one text line to the next (defaults to 1.2 * size). 
+
+    c.setFont("Helvetica", 14)  # 'Helvetica', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Helvetica-Oblique'
+
+    canvas.getAvailableFonts()
+    c.getAvailableFonts()=['Courier', 'Courier-Bold', 'Courier-BoldOblique', 'Courier-Oblique',
+                           'Helvetica', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Helvetica-Oblique',
+                           'Symbol', 'Times-Bold', 'Times-BoldItalic', 'Times-Italic', 'Times-Roman', 'ZapfDingbats']
+
+Colors:
+
+    setting colors:
+        color values ranage from 0 to 1
+    
+    canvas.setFillColorRGB(r, g, b)
+    canvas.setStrokeColorRGB(r, g, b)
+    canvas.setFillColor(acolor)
+    canvas.setStrokeColor(acolor)
+    canvas.setFillGray(gray)
+    canvas.setStrokeGray(gray)
+    canvas.setFillColorCMYK(c, m, y, k)
+    canvas.setStrikeColorCMYK(c, m, y, k)
+
+    # from reportlab/lib/colors.py:
+
+        # Special colors
+        ReportLabBlueOLD = HexColor(0x4e5688)
+        ReportLabBlue = HexColor(0x00337f)
+        ReportLabBluePCMYK = PCMYKColor(100,65,0,30,spotName='Pantone 288U')
+        ReportLabLightBlue = HexColor(0xb7b9d3)
+        ReportLabFidBlue=HexColor(0x3366cc)
+        ReportLabFidRed=HexColor(0xcc0033)
+        ReportLabGreen = HexColor(0x336600)
+        ReportLabLightGreen = HexColor(0x339933)
+
+        # color constants -- mostly from HTML standard
+        aliceblue =     HexColor(0xF0F8FF)
+        antiquewhite =  HexColor(0xFAEBD7)
+        aqua =  HexColor(0x00FFFF)
+        aquamarine =    HexColor(0x7FFFD4)
+        azure =     HexColor(0xF0FFFF)
+        beige =     HexColor(0xF5F5DC)
+        bisque =    HexColor(0xFFE4C4)
+        black =     HexColor(0x000000)
+        blanchedalmond =    HexColor(0xFFEBCD)
+        blue =  HexColor(0x0000FF)
+        blueviolet =    HexColor(0x8A2BE2)
+        brown =     HexColor(0xA52A2A)
+        burlywood =     HexColor(0xDEB887)
+        cadetblue =     HexColor(0x5F9EA0)
+        chartreuse =    HexColor(0x7FFF00)
+        chocolate =     HexColor(0xD2691E)
+        coral =     HexColor(0xFF7F50)
+        cornflowerblue = cornflower =   HexColor(0x6495ED)
+        cornsilk =  HexColor(0xFFF8DC)
+        crimson =   HexColor(0xDC143C)
+        cyan =  HexColor(0x00FFFF)
+        darkblue =  HexColor(0x00008B)
+        darkcyan =  HexColor(0x008B8B)
+        darkgoldenrod =     HexColor(0xB8860B)
+        darkgray =  HexColor(0xA9A9A9)
+        darkgrey =  darkgray
+        darkgreen =     HexColor(0x006400)
+        darkkhaki =     HexColor(0xBDB76B)
+        darkmagenta =   HexColor(0x8B008B)
+        darkolivegreen =    HexColor(0x556B2F)
+        darkorange =    HexColor(0xFF8C00)
+        darkorchid =    HexColor(0x9932CC)
+        darkred =   HexColor(0x8B0000)
+        darksalmon =    HexColor(0xE9967A)
+        darkseagreen =  HexColor(0x8FBC8B)
+        darkslateblue =     HexColor(0x483D8B)
+        darkslategray =     HexColor(0x2F4F4F)
+        darkslategrey = darkslategray
+        darkturquoise =     HexColor(0x00CED1)
+        darkviolet =    HexColor(0x9400D3)
+        deeppink =  HexColor(0xFF1493)
+        deepskyblue =   HexColor(0x00BFFF)
+        dimgray =   HexColor(0x696969)
+        dimgrey = dimgray
+        dodgerblue =    HexColor(0x1E90FF)
+        firebrick =     HexColor(0xB22222)
+        floralwhite =   HexColor(0xFFFAF0)
+        forestgreen =   HexColor(0x228B22)
+        fuchsia =   HexColor(0xFF00FF)
+        gainsboro =     HexColor(0xDCDCDC)
+        ghostwhite =    HexColor(0xF8F8FF)
+        gold =  HexColor(0xFFD700)
+        goldenrod =     HexColor(0xDAA520)
+        gray =  HexColor(0x808080)
+        grey = gray
+        green =     HexColor(0x008000)
+        greenyellow =   HexColor(0xADFF2F)
+        honeydew =  HexColor(0xF0FFF0)
+        hotpink =   HexColor(0xFF69B4)
+        indianred =     HexColor(0xCD5C5C)
+        indigo =    HexColor(0x4B0082)
+        ivory =     HexColor(0xFFFFF0)
+        khaki =     HexColor(0xF0E68C)
+        lavender =  HexColor(0xE6E6FA)
+        lavenderblush =     HexColor(0xFFF0F5)
+        lawngreen =     HexColor(0x7CFC00)
+        lemonchiffon =  HexColor(0xFFFACD)
+        lightblue =     HexColor(0xADD8E6)
+        lightcoral =    HexColor(0xF08080)
+        lightcyan =     HexColor(0xE0FFFF)
+        lightgoldenrodyellow =  HexColor(0xFAFAD2)
+        lightgreen =    HexColor(0x90EE90)
+        lightgrey =     HexColor(0xD3D3D3)
+        lightpink =     HexColor(0xFFB6C1)
+        lightsalmon =   HexColor(0xFFA07A)
+        lightseagreen =     HexColor(0x20B2AA)
+        lightskyblue =  HexColor(0x87CEFA)
+        lightslategray =    HexColor(0x778899)
+        lightslategrey = lightslategray
+        lightsteelblue =    HexColor(0xB0C4DE)
+        lightyellow =   HexColor(0xFFFFE0)
+        lime =  HexColor(0x00FF00)
+        limegreen =     HexColor(0x32CD32)
+        linen =     HexColor(0xFAF0E6)
+        magenta =   HexColor(0xFF00FF)
+        maroon =    HexColor(0x800000)
+        mediumaquamarine =  HexColor(0x66CDAA)
+        mediumblue =    HexColor(0x0000CD)
+        mediumorchid =  HexColor(0xBA55D3)
+        mediumpurple =  HexColor(0x9370DB)
+        mediumseagreen =    HexColor(0x3CB371)
+        mediumslateblue =   HexColor(0x7B68EE)
+        mediumspringgreen =     HexColor(0x00FA9A)
+        mediumturquoise =   HexColor(0x48D1CC)
+        mediumvioletred =   HexColor(0xC71585)
+        midnightblue =  HexColor(0x191970)
+        mintcream =     HexColor(0xF5FFFA)
+        mistyrose =     HexColor(0xFFE4E1)
+        moccasin =  HexColor(0xFFE4B5)
+        navajowhite =   HexColor(0xFFDEAD)
+        navy =  HexColor(0x000080)
+        oldlace =   HexColor(0xFDF5E6)
+        olive =     HexColor(0x808000)
+        olivedrab =     HexColor(0x6B8E23)
+        orange =    HexColor(0xFFA500)
+        orangered =     HexColor(0xFF4500)
+        orchid =    HexColor(0xDA70D6)
+        palegoldenrod =     HexColor(0xEEE8AA)
+        palegreen =     HexColor(0x98FB98)
+        paleturquoise =     HexColor(0xAFEEEE)
+        palevioletred =     HexColor(0xDB7093)
+        papayawhip =    HexColor(0xFFEFD5)
+        peachpuff =     HexColor(0xFFDAB9)
+        peru =  HexColor(0xCD853F)
+        pink =  HexColor(0xFFC0CB)
+        plum =  HexColor(0xDDA0DD)
+        powderblue =    HexColor(0xB0E0E6)
+        purple =    HexColor(0x800080)
+        red =   HexColor(0xFF0000)
+        rosybrown =     HexColor(0xBC8F8F)
+        royalblue =     HexColor(0x4169E1)
+        saddlebrown =   HexColor(0x8B4513)
+        salmon =    HexColor(0xFA8072)
+        sandybrown =    HexColor(0xF4A460)
+        seagreen =  HexColor(0x2E8B57)
+        seashell =  HexColor(0xFFF5EE)
+        sienna =    HexColor(0xA0522D)
+        silver =    HexColor(0xC0C0C0)
+        skyblue =   HexColor(0x87CEEB)
+        slateblue =     HexColor(0x6A5ACD)
+        slategray =     HexColor(0x708090)
+        slategrey = slategray
+        snow =  HexColor(0xFFFAFA)
+        springgreen =   HexColor(0x00FF7F)
+        steelblue =     HexColor(0x4682B4)
+        tan =   HexColor(0xD2B48C)
+        teal =  HexColor(0x008080)
+        thistle =   HexColor(0xD8BFD8)
+        tomato =    HexColor(0xFF6347)
+        turquoise =     HexColor(0x40E0D0)
+        violet =    HexColor(0xEE82EE)
+        wheat =     HexColor(0xF5DEB3)
+        white =     HexColor(0xFFFFFF)
+        whitesmoke =    HexColor(0xF5F5F5)
+        yellow =    HexColor(0xFFFF00)
+        yellowgreen =   HexColor(0x9ACD32)
+        fidblue=HexColor(0x3366cc)
+        fidred=HexColor(0xcc0033)
+        fidlightblue=HexColor("#d6e0f5")
+
+String (text):
+
+    canvas.stringWidth(self, text, fontName=None, fontSize=None)
+
+    String drawing methods
+    
+        canvas.drawString(x, y, text, mode=None, charSpace=0, direction=None, wordSpace=None, shaping=False):
+        canvas.drawRightString(x, y, text, mode=None, charSpace=0, direction=None, wordSpace=None, shaping=False)
+        canvas.drawCentredString(x, y, text, mode=None, charSpace=0, direction=None, wordSpace=None, shaping=False)
+        canvas.drawAlignedString(x, y, text, pivotChar=rl_config.decimalSymbol, mode=None, charSpace=0, direction=None, wordSpace=None, shaping=False)
+            draws text aligned on the first '.' (or other pivot character)
+    
+    The draw string methods draw single lines of text on the canvas.
+
+    Modes (from reportlib.pdfgen.textobject setTextRenderMode):
+
+        0 = Fill text
+        1 = Stroke text
+        2 = Fill then stroke
+        3 = Invisible
+        4 = Fill text and add to clipping path
+        5 = Stroke text and add to clipping path
+        6 = Fill then stroke and add to clipping path
+        7 = Add to clipping path
+
+        after we start clipping we mustn't change the mode back until after the ET
+
+Line:
+
+    lines methods:
+        canvas.line(x1,y1,x2,y2)
+            c.line(0,0,0,1.7*inch)
+            c.line(0,0,1*inch,0)
+        canvas.lines(linelist)
+
+    Changing Graphical Line Styles
+
+        canvas.setLineWidth(width)
+        canvas.setLineCap(mode)
+        canvas.setLineJoin(mode)
+        canvas.setMiterLimit(limit)
+        canvas.setDash(self, array=[], phase=0)
+
+    Lines drawn in PDF can be presented in a number of graphical styles. Lines can have different widths, they
+    can end in differing cap styles, they can meet in different join styles, and they can be continuous or they
+    can be dotted or dashed. The above methods adjust these various parameters.
+
+Rect:
+
+    canvas.rect(x, y, width, height, stroke=1, fill=0)
+    canvas.roundRect(x, y, width, height, radius, stroke=1, fill=0)
+
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import landscape, portrait, letter, inch
+
+
+    def hello(c):
+        # move the origin up and to the left
+        c.translate(inch,inch)
+        # define a large font
+        c.setFont("Helvetica", 14)
+        # choose some colors
+        c.setStrokeColorRGB(0.2,0.5,0.3)
+        c.setFillColorRGB(1,0,1)
+        # draw some lines
+        # lines methods:
+        #   canvas.line(x1,y1,x2,y2)
+        #   canvas.lines(linelist)
+        c.line(0,0,0,1.7*inch)
+        c.line(0,0,1*inch,0)
+        # draw a rectangle
+        # shape methods:
+        #   canvas.grid(xlist, ylist)
+        #   canvas.bezier(x1, y1, x2, y2, x3, y3, x4, y4)
+        #   canvas.arc(x1,y1,x2,y2)
+        #   canvas.rect(x, y, width, height, stroke=1, fill=0)
+        #   canvas.ellipse(x1,y1, x2,y2, stroke=1, fill=0)
+        #   canvas.wedge(x1,y1, x2,y2, startAng, extent, stroke=1, fill=0)
+        #   canvas.circle(x_cen, y_cen, r, stroke=1, fill=0)
+        #   canvas.rect(x, y, width, height, stroke=1, fill=0)
+        #   canvas.roundRect(x, y, width, height, radius, stroke=1, fill=0)
+        c.rect(0.2*inch,0.2*inch,1*inch,1.5*inch, fill=1)
+        # make text go straight up
+        c.rotate(90)
+        # change color
+        c.setFillColorRGB(0,0.77,0.77)
+        # say hello (note after rotate the y coord needs to be negative!)
+        c.drawString(0.3*inch, -inch, "Hello World")
+
+    pagesize = portrait(letter)  # 612 x 792
+    #pagesize = landscape(letter)
+    width, height = pagesize  # in points (1/72")
+    c = canvas.Canvas("hello.pdf", pagesize=pagesize)
+    hello(c)
+
+    # clears all settings (colors, fonts, etc).  These must be re-established.
+    c.showPage()
+
+    c.save()
+
+        # other stuff:
+
+        #   The text object methods
+        #
+        #   textobject = canvas.beginText(x, y)
+        #   ...
+        #   canvas.drawText(textobject)
+        #
+        #   Text objects are used to format text in ways that are not supported directly by the canvas interface.
+        #   A program creates a text object from the canvas using beginText and then formats text by invoking textobject
+        #   methods. Finally the textobject is drawn onto the canvas using drawText.
+
+        #   The path object methods
+        #
+        #   path = canvas.beginPath()
+        #   canvas.drawPath(path, stroke=1, fill=0, fillMode=None)
+        #   canvas.clipPath(path, stroke=1, fill=0, fillMode=None)
+        #
+        #   Path objects are similar to text objects: they provide dedicated control for performing complex graphical
+        #   drawing not directly provided by the canvas interface. A program creates a path object using beginPath
+        #   populates the path with graphics using the methods of the path object and then draws the path on the canvas
+        #   using drawPath.
+        #
+        #   It is also possible to use a path as a "clipping region" using the clipPath method -- for example a circular
+        #   path can be used to clip away the outer parts of a rectangular image leaving only a circular part of the
+        #   image visible on the page.
+        #
+        #   If fill=1 is specified then the fillMode argument may be used to set either 0=even-odd or 1=non-zero filling mode.
+        #   which will alter the way that complex paths are filled. If the default None values is used then the canvas
+        #   _fillMode attribute value is used (normally 0 ie even-odd).
+
+        #   Draw inline image
+        #
+        #   This image is copied inline into the pdf file.  If the same image is in multiple places, this results in mulitple
+        #   copies of the image being placed into the pdf file.  Returns the actual image size (width, height).
+        #
+        #   canvas.drawInlineImage(self, image, x,y, width=None,height=None)
+        #
+        #   This one inserts one copy of the image into the PDF file, even if used multiple times.  Also returns (width, height).
+        #
+        #   canvas.drawImage(self, image, x,y, width=None,height=None,mask=None)
+        
+        #   toolbox:
+        #
+
+
+        #   Changing Geometry
+        #
+        #   canvas.setPageSize(pair)
+        #   canvas.transform(a,b,c,d,e,f):
+        #   canvas.translate(dx, dy)
+        #   canvas.scale(x, y)
+        #   canvas.rotate(theta)
+        #   canvas.skew(alpha, beta)
+        #
+        #   All PDF drawings fit into a specified page size. Elements drawn outside of the specified page size are not
+        #   visible. Furthermore all drawn elements are passed through an affine transformation which may adjust their
+        #   location and/or distort their appearence. The setPageSize method adjusts the current page size. The transform,
+        #   translate, scale, rotate, and skew methods add additional transformations to the current transformation.
+        #   It is important to remember that these transformations are incremental -- a new transform modifies the current
+        #   transform (but does not replace it).
+
+        #   State control
+        #
+        #   canvas.saveState()
+        #   canvas.restoreState()
+        #
+        #   Very often it is important to save the current font, graphics transform, line styles and other graphics state
+        #   in order to restore them later. The saveState method marks the current graphics state for later restoration by
+        #   a matching restoreState. Note that the save and restore method invokation must match -- a restore call restores
+        #   the state to the most recently saved state which hasn't been restored yet. You cannot save the state on one
+        #   page and restore it on the next, however -- no state is preserved between pages.
+
+        #   Other canvas methods
+        #
+        #   Not all methods of the canvas object fit into the "tool" or "toolbox" categories. Below are some of the
+        #   misfits, included here for completeness.
+        #
+        #   canvas.setAuthor()
+        #   canvas.addOutlineEntry(title, key, level=0, closed=None)
+        #   canvas.setTitle(title)
+        #   canvas.setSubject(subj)
+        #   canvas.pageHasData()
+        #   canvas.showOutline()
+        #   canvas.bookmarkPage(name)
+        #   canvas.bookmarkHorizontalAbsolute(name, yhorizontal)
+        #   canvas.doForm()
+        #   canvas.beginForm(name, lowerx=0, lowery=0, upperx=None, uppery=None)
+        #   canvas.endForm()
+        #   canvas.linkAbsolute(contents, destinationname, Rect=None, addtopage=1, name=None, **kw)
+        #   canvas.linkRect(contents, destinationname, Rect=None, addtopage=1, relative=1, name=None, **kw)
+        #   canvas.getPageNumber()
+        #   canvas.addLiteral()
+
+        #   Text object methods
+        #
+        #   For the dedicated presentation of text in a PDF document, use a text object. The text object interface provides
+        #   detailed control of text layout parameters not available directly at the canvas level. In addition, it results
+        #   in smaller PDF that will render faster than many separate calls to the drawString methods.
+        #
+        #   textobject.setTextOrigin(x,y)
+        #   textobject.setTextTransform(a,b,c,d,e,f)
+        #   textobject.moveCursor(dx, dy) # from start of current LINE
+        #   (x,y) = textobject.getCursor()
+        #   x = textobject.getX(); y = textobject.getY()
+        #   textobject.setFont(psfontname, size, leading = None)
+        #   textobject.textOut(text)
+        #   textobject.textLine(text='')
+        #   textobject.textLines(stuff, trim=1)
+        #
+        #   The text object methods shown above relate to basic text geometry.
+        #
+        #   A text object maintains a text cursor which moves about the page when text is drawn. For example the setTextOrigin
+        #   places the cursor in a known position and the textLine and textLines methods move the text cursor down past the
+        #   lines that have been missing.
+        #
+        #   eg(examples.testcursormoves1)
+        #
+        #   The cursormoves function relies on the automatic movement of the text cursor for placing text after the origin
+        #   has been set.
+
+        #   Character Spacing
+        #   textobject.setCharSpace(charSpace)  # 0 looks a bit crunched.  0.5 better, maybe 1.0 or even 1.5 ?
+        #
+        #   The setCharSpace method adjusts one of the parameters of text -- the inter-character spacing.
+        #
+        #   eg(examples.testcharspace)
+        #
+        #   The charspace function exercises various spacing settings. It produces the following page.
+
+        #   Word Spacing
+        #
+        #   textobject.setWordSpace(wordSpace)  # 0 looks good
+        #
+        #   disc("The setWordSpace method adjusts the space between words.")
+        #
+        #   eg(examples.testwordspace)
+        #
+        #   The wordspace function shows what various word space settings look like below.
+
+        #   Horizontal Scaling
+        #
+        #   textobject.setHorizScale(horizScale)
+        #
+        #   Lines of text can be stretched or shrunken horizontally by the setHorizScale method.  100 is default.
+        #
+        #   eg(examples.testhorizontalscale)
+        #
+        #   The horizontal scaling parameter horizScale is given in percentages (with 100 as the default), so the 80
+        #   setting shown below looks skinny.
+
+        #   Interline spacing (Leading)
+        #
+        #   textobject.setLeading(leading)
+        #
+        #   The vertical offset between the point at which one line starts and where the next starts is called the leading
+        #   offset. The setLeading method adjusts the leading offset.
+        #
+        #   eg(examples.testleading)
+        #
+        #   As shown below if the leading offset is set too small characters of one line my write over the bottom parts
+        #   of characters in the previous line.
+
+        #   Other text object methods
+        #
+        #   textobject.setTextRenderMode(mode)
+        #
+        #   The setTextRenderMode method allows text to be used as a forground for clipping background drawings, for example.
+        #
+        #   textobject.setRise(rise)
+        #
+        #   The setRise method raises or lowers text on the line (for creating superscripts or subscripts, for example).
+        #
+        #
+        #   textobject.setFillColor(aColor);
+        #   textobject.setStrokeColor(self, aColor)
+
+        #   Paths and Lines
+        #
+        #   Just as textobjects are designed for the dedicated presentation of text, path objects are designed for the 
+        #   dedicated construction of graphical figures. When path objects are drawn onto a canvas they are drawn as one
+        #   figure (like a rectangle) and the mode of drawing for the entire figure can be adjusted: the lines of the
+        #   figure can be drawn (stroked) or not; the interior of the figure can be filled or not; and so forth.
+        #
+        #   For example the star function uses a path object to draw a star
+        #
+        #   eg(examples.teststar)
+        #
+        #   The star function has been designed to be useful in illustrating various line style parameters supported by pdfgen.
+
+#   First of all, we will look at the constructor arguments for the canvas:
+#
+#   def __init__(self,filename,
+#                pagesize=(595.27,841.89),
+#                bottomup = 1,
+#                pageCompression=0,
+#                encoding=rl_config.defaultEncoding,
+#                verbosity=0,
+#                encrypt=None):
+#
+#   The filename argument controls the name of the final PDF file. You may also pass in any open binary stream (such as
+#   sys.stdout, the python process standard output with a binary encoding) and the PDF document will be written to that.
+#   Since PDF is a binary format, you should take care when writing other stuff before or after it; you can't deliver PDF
+#   documents inline in the middle of an HTML page!
+#
+#   The pagesize argument is a tuple of two numbers in points (1/72 of an inch). The canvas defaults to A4 (an international
+#   standard page size which differs from the American standard page size of letter), but it is better to explicitly specify
+#   it. Most common page sizes are found in the library module reportlab.lib.pagesizes, so you can use expressions like
+
+#   Line methods
+#
+#   canvas.line(x1,y1,x2,y2)
+#   canvas.lines(linelist)
+#
+#   The line methods draw straight line segments on the canvas.
+
+#   Shape methods
+#
+#   canvas.grid(xlist, ylist) 
+#   canvas.bezier(x1, y1, x2, y2, x3, y3, x4, y4)
+#   canvas.arc(x1,y1,x2,y2) 
+#   canvas.rect(x, y, width, height, stroke=1, fill=0) 
+#   canvas.ellipse(x1,y1, x2,y2, stroke=1, fill=0)
+#   canvas.wedge(x1,y1, x2,y2, startAng, extent, stroke=1, fill=0) 
+#   canvas.circle(x_cen, y_cen, r, stroke=1, fill=0)
+#   canvas.roundRect(x, y, width, height, radius, stroke=1, fill=0) 
+#
+#   The shape methods draw common complex shapes on the canvas.
