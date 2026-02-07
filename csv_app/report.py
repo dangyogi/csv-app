@@ -192,18 +192,23 @@ class Report:
     def print(self, header_row=None, file=sys.stdout):
         if header_row is not None:
             from subprocess import run
+            import io
+            assert file == sys.stdout, "report.print file may not be specified with header_row"
             result = run(('stty', 'size'), capture_output=True, check=True)
             height, width = (int(x) for x in result.stdout.split())
             height -= 1  # less takes one line at the bottom
            #print(f"{height=}, {width=}")
+            file = io.StringIO()
         lines_on_page = 0
         for row in self.rows:
             if header_row is not None and lines_on_page == height:
-                print(file=file)
+               #print('\f', end='', file=file)
                 self.rows[header_row].print(file)
-                lines_on_page = 2
+                lines_on_page = 1
             row.print(file)
             lines_on_page += 1
+        if header_row is not None:
+            run(('less', '-c'), input=file.getvalue(), text=True, check=True)
 
     def make_col_name(self, col_name):
         if col_name not in self.name_suffixes:
@@ -662,6 +667,7 @@ class Row_template(Value):
 
 def dump_table(table_name, pdf=False, default_fontsize=13):
     from itertools import chain
+    sys.path.append('.')
     import database
 
     database.load_database()
@@ -675,9 +681,9 @@ def dump_table(table_name, pdf=False, default_fontsize=13):
     header_cols = []
     data_cols = []
     header_names = []
-    for name, column in chain(table.row_class.types.items(), table.row_class.calculated.items()):
-        if name not in table.row_class.hidden:
-            header_names.append(name)
+    for column in table.row_class.columns:
+        if not column.hidden:
+            header_names.append(column.name.lower())
             if column.alignment == 'right':
                 header_cols.append(Right(bold=True))
                 data_cols.append(Right())
@@ -695,7 +701,7 @@ def dump_table(table_name, pdf=False, default_fontsize=13):
            data=data_cols,
           )
     report.new_row('title', table_name)
-    report.new_row('headers', *(table.row_class.types[name].abbr for name in header_names))
+    report.new_row('headers', *(table.row_class.column_map[name].abbr for name in header_names))
     for row in table.values():
         data = report.new_row('data')
         for name in header_names:
@@ -717,8 +723,10 @@ def dump_table(table_name, pdf=False, default_fontsize=13):
         report.print(header_row=1)
 
 
+# FIX: Not used... ??
 def dump_data(report_name, headers, data, pdf=False, default_fontsize=13):
     from itertools import chain
+    sys.path.append('.')
     import database
 
     data = tuple(data)

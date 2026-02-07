@@ -70,12 +70,12 @@ class base_table:
             print(self.name, file=file)                 # first line is name of table (only one column)
         widths = {}
         alignments = {}
-        headers = tuple(self.row_class.types.keys())
+        headers = tuple(self.row_class.stored_keys)
         header_row = []
         for name in headers:
             name = name.lower()
             max_width = len(name)
-            alignment = self.row_class.types[name].alignment
+            alignment = self.row_class.column_map[name].alignment
             alignments[name] = alignment
             for row in self.values():
                 if getattr(row, name) is not None:

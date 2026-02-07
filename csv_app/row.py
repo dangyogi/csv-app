@@ -116,13 +116,13 @@ class Bool_column(Custom_column):
 
 
 class Row_metaclass(type):
-    r'''Sets types and required on cls from cls.columns.
+    r'''Sets column_map, stored_names, required and default values on cls from cls.columns.
     '''
     def __new__(cls, name, bases, dct):
         if 'columns' in dct:
-            dct['types'] = {col.name.lower(): col for col in dct['columns'] if not col.calculated}
+            dct['column_map'] = {col.name.lower(): col for col in dct['columns']}
+            dct['stored_names'] = [col.name.lower() for col in dct['columns'] if not col.calculated]
             dct['required'] = frozenset(col.name.lower() for col in dct['columns'] if col.required)
-            dct['calculated'] = {col.name.lower(): col for col in dct['columns'] if col.calculated}
             for col in dct['columns']:
                 if not col.calculated and not col.required:
                     dct[col.name] = col.default
@@ -147,14 +147,14 @@ class Row(metaclass=Row_metaclass):
 
     def __init__(self, **attrs):
         attrs_in = frozenset(name.strip().lower() for name in attrs.keys())
-        unknown_attrs = attrs_in.difference(self.types.keys())
+        unknown_attrs = attrs_in.difference(self.stored_names)
         assert not unknown_attrs, f"{self.table_name}.__init__: unknown attrs={tuple(unknown_attrs)}"
         missing_attrs = self.required.difference(attrs_in)
         assert not missing_attrs, f"{self.table_name}.__init__: missing attrs={sorted(missing_attrs)}, " \
                                   f"got {sorted(attrs_in)}"
         for name, value in attrs.items():
             name = name.strip().lower()
-            python_value = self.types[name].to_python(value)
+            python_value = self.column_map[name].to_python(value)
             if python_value is not None:
                 setattr(self, name, python_value)
 
@@ -193,7 +193,7 @@ class Row(metaclass=Row_metaclass):
     def from_csv(cls, header, row, ignore_unknown_cols=False):
         r'''strips both the names in header and the values in row.
 
-        names in header are converted to lowercase as key for cls.types.
+        names in header are converted to lowercase as key for cls.column_map.
 
         attrs with an empty value are not loaded, so that they have their default values.
         '''
@@ -203,17 +203,17 @@ class Row(metaclass=Row_metaclass):
         for name, value in zip(header, row):
             name = name.strip().lower()
             value = value.strip()
-            if name not in cls.types:
+            if name not in cls.stored_names:
                 if not ignore_unknown_cols:
                     raise AssertionError(f"{cls.table_name}.from_csv: unknown attr={name}")
             else:
-                python_value = cls.types[name].to_python(value)
+                python_value = cls.column_map[name].to_python(value)
                 if python_value is not None:
                     attrs[name] = python_value
         return cls(**attrs)
 
     def csv_value(self, name):
-        return self.types[name].to_csv(getattr(self, name))
+        return self.column_map[name].to_csv(getattr(self, name))
 
     def key(self):
         if self.primary_key is not None:
@@ -225,7 +225,7 @@ class Row(metaclass=Row_metaclass):
 
         Ends with newline.
         '''
-        for i, attr in enumerate(self.types.keys()):
+        for i, attr in enumerate(self.stored_names):
             if i:
                 print(', ', end='')
             print(f"{attr}={getattr(self, attr)}", end='')
