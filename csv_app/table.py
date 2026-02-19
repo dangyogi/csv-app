@@ -33,7 +33,7 @@ class base_table:
         '''
         errors = 0
         for row_num, row in enumerate(self.values(), 1):
-            if not row.check_foreign_keys(row_num, False):
+            if not row.check_foreign_keys(Tables, row_num, False):
                 errors += 1
         return errors
 
@@ -113,7 +113,7 @@ class table_unique(base_table, dict):
     def add_row(self, row, skip_fk_check=False):
         key = row.key()
         if not skip_fk_check:
-            row.check_foreign_keys(key, raise_exc=True)
+            row.check_foreign_keys(Tables, key, raise_exc=True)
         assert key not in self, f"{self.name}.insert: Duplicate {key=}"
         self[key] = row
 
@@ -168,7 +168,7 @@ class table_by_date(base_table, list):
        #print(f"{self.name}.add_row(date={row.date}), inserted at {i=}")
         list.insert(self, i, row)
         if not skip_fk_check:
-            row.check_foreign_keys(row.date, raise_exc=True)
+            row.check_foreign_keys(Tables, row.date, raise_exc=True)
 
     def values(self):
         return self
