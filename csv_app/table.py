@@ -70,7 +70,7 @@ class base_table:
             print(self.name, file=file)                 # first line is name of table (only one column)
         widths = {}
         alignments = {}
-        headers = tuple(self.row_class.stored_keys)
+        headers = tuple(self.row_class.stored_names)
         header_row = []
         for name in headers:
             name = name.lower()
