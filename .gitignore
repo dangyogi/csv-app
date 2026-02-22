@@ -1,6 +1,7 @@
 # My stuff
 .*.swp
 .pyhist
+.private
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
