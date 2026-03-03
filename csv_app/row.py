@@ -66,7 +66,7 @@ class Column:
     def convert(self, value):
         ans = str(value)
         if self.choices:
-            assert ans in choices, f"{self.name}.convert: {ans!r} not in {self.choices}"
+            assert ans in self.choices, f"{self.name}.convert: {ans!r} not in {self.choices}"
         return ans
 
 class Custom_column(Column):
