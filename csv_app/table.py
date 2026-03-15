@@ -49,19 +49,24 @@ class base_table:
 
         If from_scratch is False, appends the rows to the current contents; otherwise it replaces
         the current contents.
+
+        Returns the number of rows inserted.
         '''
         if from_scratch:
             self.clear()
         header = next(csv_reader)
         try:
+            num_rows = 0
             while True:
                 row = next(csv_reader)
                 if len(row) == 0:
                     break
                 self.insert_from_csv(header, row, ignore_unknown_cols=ignore_unknown_cols,
                                      skip_fk_check=skip_fk_check)
+                num_rows += 1
         except StopIteration:
             pass
+        return num_rows
 
     def to_csv(self, file, add_table_name=True, add_empty_row=False):
         r'''Writes itself in database csv format to file.
@@ -203,24 +208,19 @@ __all__ = "Decimal date datetime timedelta abbr_month Tables Database load_rows 
 
 def load_database(csv_filename=None, ignore_unknown_cols=False):
     r'''Loads all database tables in csv_filename from scratch skipping fk_check.
-
-    Returns {table_name: table}
     '''
     if csv_filename is None:
         csv_filename = Database_filename
     with open(csv_filename, 'r') as f:
         reader = iter(csv.reader(f, CSV_dialect, **CSV_format))
-        ans = {}
         while True:
             try:
                 header = next(reader)
                 assert len(header) == 1, f"from_csv: Expected table name, got {header}"
-                ans[header[0].strip()] = \
-                  Tables[header[0].strip()].from_csv(reader, ignore_unknown_cols=ignore_unknown_cols,
-                                                     skip_fk_check=True)
+                Tables[header[0].strip()].from_csv(reader, ignore_unknown_cols=ignore_unknown_cols,
+                                                   skip_fk_check=True)
             except StopIteration:
                 break
-    return ans
 
 def save_database(csv_filename=None):
     if csv_filename is None:
@@ -242,6 +242,8 @@ def load_csv(csv_filename, from_scratch=True, ignore_unknown_cols=False):
     clears current contents of table if from_scratch is True, otherwise, rows are appended.
 
     If csv_filename has no .csv suffix, one is added.
+
+    Returns the number of rows inserted.
     '''
     if not csv_filename.endswith(".csv"):
         csv_filename += ".csv"
@@ -250,7 +252,7 @@ def load_csv(csv_filename, from_scratch=True, ignore_unknown_cols=False):
         row1 = next(csv_reader)
         assert len(row1) == 1, f"load_csv: Expected table name, got {row1=}"
         table_name = row1[0].strip()
-        Tables[table_name].from_csv(csv_reader, from_scratch=from_scratch, ignore_unknown_cols=ignore_unknown_cols)
+        return Tables[table_name].from_csv(csv_reader, from_scratch=from_scratch, ignore_unknown_cols=ignore_unknown_cols)
 
 def load_all(from_scratch=True, ignore_unknown_cols=False):
     for table in Tables.values():
