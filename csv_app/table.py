@@ -110,7 +110,7 @@ class base_table:
             print('   ', end='')
             row.dump()
 
-class table_unique(base_table, dict):
+class Table_unique(base_table, dict):
     def __init__(self, row_class):
         base_table.__init__(self, row_class)
         dict.__init__(self)
@@ -122,7 +122,7 @@ class table_unique(base_table, dict):
         assert key not in self, f"{self.name}.insert: Duplicate {key=}"
         self[key] = row
 
-class table_by_date(base_table, list):
+class Table_by_date(base_table, list):
     def __init__(self, row_class):
         base_table.__init__(self, row_class)
         list.__init__(self)
@@ -193,15 +193,15 @@ def load_rows(rows, *custom_tables):
         if row_class.table_name in custom_map:
             return custom_map[row_class.table_name](row_class)
         if row_class.primary_key is not None or row_class.primary_keys is not None:
-            return table_unique(row_class)
-        return table_by_date(row_class)
+            return Table_unique(row_class)
+        return Table_by_date(row_class)
     for row_class in rows:
         Tables[row_class.table_name] = table_for_row(row_class)
     Database.load()
 
 
 __all__ = "Decimal date datetime timedelta abbr_month Tables Database load_rows " \
-          "table_unique table_by_date " \
+          "Table_unique Table_by_date " \
           "load_database save_database load_csv load_all clear_all check_foreign_keys " \
           "CSV_dialect CSV_format set_database_filename run".split()
 
