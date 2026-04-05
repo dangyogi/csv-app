@@ -20,7 +20,7 @@ def align(value, width, alignment):
         return ' ' * (width - len(value)) + value
     return value + ' ' * (width - len(value))
 
-class base_table:
+class Base_table:
     def __init__(self, row_class):
         self.row_class = row_class
 
@@ -110,9 +110,9 @@ class base_table:
             print('   ', end='')
             row.dump()
 
-class Table_unique(base_table, dict):
+class Table_unique(Base_table, dict):
     def __init__(self, row_class):
-        base_table.__init__(self, row_class)
+        Base_table.__init__(self, row_class)
         dict.__init__(self)
 
     def add_row(self, row, skip_fk_check=False):
@@ -122,9 +122,9 @@ class Table_unique(base_table, dict):
         assert key not in self, f"{self.name}.insert: Duplicate {key=}"
         self[key] = row
 
-class Table_by_date(base_table, list):
+class Table_by_date(Base_table, list):
     def __init__(self, row_class):
-        base_table.__init__(self, row_class)
+        Base_table.__init__(self, row_class)
         list.__init__(self)
 
     def first_date(self, date):
