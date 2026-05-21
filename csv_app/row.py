@@ -29,9 +29,10 @@ class Column:
     r'''Handles reading in, validating, and writing out the cell values for one column.
     '''
     alignment = 'left'
+    omit = False
 
     def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False, 
-                 parse=None, default=None, choices=None):
+                 parse=None, default=None, choices=None, min_width=None, can_edit=None, omit=None):
         self.name = name
         self.abbr = abbr or name  # for column names in reports
         self.hidden = hidden
@@ -46,6 +47,21 @@ class Column:
             self.choices = None
         else:
             self.choices = frozenset(choices)
+        self.min_width = min_width
+        if can_edit is not None:
+            self._can_edit = can_edit
+        if omit is not None:
+            self.omit = omit
+
+    @property
+    def can_edit(self):
+        r'''This let's me test whether can_edit has been set in the constructor.
+
+        I do this in Row_metaclass to set can_edit to False for primary keys.
+        '''
+        if self._can_edit is None:
+            return True
+        return self._can_edit
 
     def to_python(self, csv_value):
         if not isinstance(csv_value, str):
@@ -64,6 +80,8 @@ class Column:
         return self.convert(value)
 
     def convert(self, value):
+        if value is None:
+            return ""
         ans = str(value)
         if self.choices:
             assert ans in self.choices, f"{self.name}.convert: {ans!r} not in {self.choices}"
@@ -84,6 +102,8 @@ class Date_column(Custom_column):
         return datetime.strptime(s, Date_format).date()
 
     def convert(self, date_value):
+        if date_value is None:
+            return ""
         return date_value.strftime(Date_format)
 
 class Set_column(Custom_column):
@@ -95,6 +115,8 @@ class Set_column(Custom_column):
         return set(x.strip() for x in s.split(','))
 
     def convert(self, set_value):
+        if set_value is None:
+            return ""
         return ','.join(sorted(set_value))
 
 class Bool_column(Custom_column):
@@ -110,6 +132,8 @@ class Bool_column(Custom_column):
         raise ValueError(f"{self.name}.parse({s=}): not a valid bool value")
 
     def convert(self, bool_value):
+        if bool_value is None:
+            return ""
         if bool_value:
             return "True"
         return "False"
@@ -121,9 +145,17 @@ class Row_metaclass(type):
     def __new__(cls, name, bases, dct):
         if 'columns' in dct:
             dct['column_map'] = {col.name.lower(): col for col in dct['columns']}
-            dct['stored_names'] = [col.name.lower() for col in dct['columns'] if not col.calculated]
+            dct['stored_names'] = [col.name.lower() for col in dct['columns'] if not col.calculated and not col.omit]
             dct['required'] = frozenset(col.name.lower() for col in dct['columns'] if col.required)
             for col in dct['columns']:
+                col_name = col.name
+               #print(f"Row_metaclass({name=}).__new__({col_name=}): col_name={col_name}, {hasattr(col, '_can_edit')=}, "
+               #      f"{dct.get('primary_key', None)=}")
+                if not hasattr(col, '_can_edit'):
+                    if col_name.lower() == dct.get('primary_key', None) or \
+                       col_name.lower() in dct.get('primary_keys', ()):
+                       #print(f"Row_metaclass.__new__({col_name=}): setting col.name={col_name}._can_edit to False")
+                        col._can_edit = False
                 if not col.calculated and not col.required:
                     dct[col.name] = col.default
         return super().__new__(cls, name, bases, dct)
@@ -144,6 +176,8 @@ class Row(metaclass=Row_metaclass):
     primary_keys = None
     foreign_keys = ()
     in_database = True
+    omit = False
+    row_commands = ['View/Edit', 'Delete', 'Cancel']
 
     def __init__(self, **attrs):
         attrs_in = frozenset(name.strip().lower() for name in attrs.keys())
@@ -157,6 +191,11 @@ class Row(metaclass=Row_metaclass):
             python_value = self.column_map[name].to_python(value)
             if python_value is not None:
                 setattr(self, name, python_value)
+
+    def get(self, column_name):
+        r'''Returns value as string for display.
+        '''
+        return self.column_map[column_name.lower()].convert(getattr(self, column_name))
 
     def check_foreign_keys(self, tables, row_id, raise_exc=True):
         r'''Returns True if all tests pass.
@@ -219,6 +258,17 @@ class Row(metaclass=Row_metaclass):
         if self.primary_key is not None:
             return getattr(self, self.primary_key)
         return tuple(getattr(self, key) for key in self.primary_keys)
+
+    def human_key(self):
+        if self.primary_key is not None:
+            return self.get(self.primary_key)
+        if self.primary_keys is not None:
+            return tuple(self.get(key) for key in self.primary_keys)
+        return str(self.row_num)
+
+    def execute(self, app, command):
+        print(f"Row({self.table_name=}).execute: {command=} unknown", file=app.trace_file)
+        raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
 
     def dump(self):
         r'''Appends attr values onto end of current print line.

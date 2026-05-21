@@ -25,8 +25,30 @@ class Base_table:
         self.row_class = row_class
 
     @property
+    def table_commands(self):
+        return [table.name for table in Tables.values() if not table.row_class.omit] + ['Save', 'Exit']
+
+    @property
+    def row_commands(self):
+        return self.row_class.row_commands
+
+    @property
+    def columns(self):
+        return self.row_class.columns
+
+    @property
     def name(self):
         return self.row_class.__name__
+
+    def get_rows(self, app):
+       #print(f"{self.__class__.__name__}({self.name=}).get_rows", file=app.trace_file)
+        return list(self.values())
+
+    def execute(self, app, command):
+        print(f"{self.name=}.execute({command=})", file=app.trace_file)
+        if command == 'Save':
+           print(f"{self.name=}.execute('Save'): not yet implemented", file=app.trace_file)
+        raise ValueError(f"{self.name=}.execute: {command=} unknown")
 
     def check_foreign_keys(self):
         r'''Returns the number of errors found.
@@ -177,6 +199,14 @@ class Table_by_date(Base_table, list):
 
     def values(self):
         return self
+
+    def get_rows(self, app):
+        ans = []
+        for row_num, row in enumerate(self, 1):
+            row.row_num = row_num
+            ans.append(row)
+       #print(f"Table_by_date({self.name=}).get_rows: {ans[0].row_num=}", file=app.trace_file)
+        return ans
 
 Tables = {}
 
