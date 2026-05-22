@@ -26,7 +26,7 @@ class Base_table:
 
     @property
     def table_commands(self):
-        return [table.name for table in Tables.values() if not table.row_class.omit] + ['Save', 'Exit']
+        return [table.name for table in Tables.values() if not table.row_class.omit] + ['Save']
 
     @property
     def row_commands(self):

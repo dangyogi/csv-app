@@ -263,7 +263,7 @@ class Row(metaclass=Row_metaclass):
         if self.primary_key is not None:
             return self.get(self.primary_key)
         if self.primary_keys is not None:
-            return tuple(self.get(key) for key in self.primary_keys)
+            return ', '.join(self.get(key) for key in self.primary_keys)
         return str(self.row_num)
 
     def execute(self, app, command):
