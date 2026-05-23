@@ -48,20 +48,9 @@ class Column:
         else:
             self.choices = frozenset(choices)
         self.min_width = min_width
-        if can_edit is not None:
-            self._can_edit = can_edit
+        self.can_edit = can_edit
         if omit is not None:
             self.omit = omit
-
-    @property
-    def can_edit(self):
-        r'''This let's me test whether can_edit has been set in the constructor.
-
-        I do this in Row_metaclass to set can_edit to False for primary keys.
-        '''
-        if self._can_edit is None:
-            return True
-        return self._can_edit
 
     def to_python(self, csv_value):
         if not isinstance(csv_value, str):
@@ -149,13 +138,16 @@ class Row_metaclass(type):
             dct['required'] = frozenset(col.name.lower() for col in dct['columns'] if col.required)
             for col in dct['columns']:
                 col_name = col.name
-               #print(f"Row_metaclass({name=}).__new__({col_name=}): col_name={col_name}, {hasattr(col, '_can_edit')=}, "
+               #print(f"Row_metaclass({name=}).__new__({col_name=}): col_name={col_name}, {hasattr(col, 'can_edit')=}, "
                #      f"{dct.get('primary_key', None)=}")
-                if not hasattr(col, '_can_edit'):
+                if col.can_edit is None:
                     if col_name.lower() == dct.get('primary_key', None) or \
-                       col_name.lower() in dct.get('primary_keys', ()):
-                       #print(f"Row_metaclass.__new__({col_name=}): setting col.name={col_name}._can_edit to False")
-                        col._can_edit = False
+                       col_name.lower() in dct.get('primary_keys', ())  or \
+                       col.calculated:
+                       #print(f"Row_metaclass.__new__({col_name=}): setting col.name={col_name}.can_edit to False")
+                        col.can_edit = False
+                    else:
+                        col.can_edit = True
                 if not col.calculated and not col.required:
                     dct[col.name] = col.default
         return super().__new__(cls, name, bases, dct)
@@ -177,7 +169,8 @@ class Row(metaclass=Row_metaclass):
     foreign_keys = ()
     in_database = True
     omit = False
-    row_commands = ['View/Edit', 'Delete', 'Cancel']
+    row_popup_commands = 'View/Edit', 'Delete', 'Cancel'
+    commands = ()
 
     def __init__(self, **attrs):
         attrs_in = frozenset(name.strip().lower() for name in attrs.keys())

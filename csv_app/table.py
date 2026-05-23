@@ -25,12 +25,12 @@ class Base_table:
         self.row_class = row_class
 
     @property
-    def table_commands(self):
+    def screen_popup_commands(self):
         return [table.name for table in Tables.values() if not table.row_class.omit] + ['Save']
 
     @property
-    def row_commands(self):
-        return self.row_class.row_commands
+    def row_popup_commands(self):
+        return self.row_class.row_popup_commands
 
     @property
     def columns(self):
