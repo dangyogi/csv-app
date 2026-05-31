@@ -4,12 +4,13 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["csv_app"]
+[tool.setuptools.package-dir]
+csv_app = "src"
 
 [project]
 name = "csv-app"
 version = "0.0.1"
+description = "Library for using CSV files as a simple database"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
