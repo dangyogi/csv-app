@@ -683,7 +683,7 @@ def dump_table(table_name, pdf=False, default_fontsize=13):
     header_names = []
     for column in table.row_class.columns:
         if not column.hidden:
-            header_names.append(column.name.lower())
+            header_names.append(column.name)
             if column.alignment == 'right':
                 header_cols.append(Right(bold=True))
                 data_cols.append(Right())

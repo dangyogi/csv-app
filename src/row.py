@@ -36,12 +36,21 @@ class Column:
         self.name = name
         self.abbr = abbr or name  # for column names in reports
         self.hidden = hidden
-        self.required = required
-        self.calculated = calculated
         if parse is not None:
             self.parse = parse
             self.alignment = 'right'
-        if not required:
+        if calculated:
+            assert default is None, f"Column {name}: calculated column can't have default"
+            assert not required, f"Column {name}, calculated column can't be required"
+            assert not can_edit, f"Column {name}, calculated column can't be editable"
+            can_edit = False
+        self.calculated = calculated
+        if required:
+            assert default is None, f"Column {name}: required column can't have default"
+        elif default is None:
+            self.default = default
+        self.required = required
+        if default is not None:
             self.default = default
         if choices is None:
             self.choices = None
@@ -133,22 +142,24 @@ class Row_metaclass(type):
     '''
     def __new__(cls, name, bases, dct):
         if 'columns' in dct:
-            dct['column_map'] = {col.name.lower(): col for col in dct['columns']}
-            dct['stored_names'] = [col.name.lower() for col in dct['columns'] if not col.calculated and not col.omit]
-            dct['required'] = frozenset(col.name.lower() for col in dct['columns'] if col.required)
+            dct['column_map'] = {col.name: col for col in dct['columns']}
+            dct['stored_names'] = [col.name for col in dct['columns'] if not col.calculated and not col.omit]
+            dct['required'] = frozenset(col.name for col in dct['columns'] if col.required)
             for col in dct['columns']:
                 col_name = col.name
-               #print(f"Row_metaclass({name=}).__new__({col_name=}): col_name={col_name}, {hasattr(col, 'can_edit')=}, "
-               #      f"{dct.get('primary_key', None)=}")
-                if col.can_edit is None:
-                    if col_name.lower() == dct.get('primary_key', None) or \
-                       col_name.lower() in dct.get('primary_keys', ())  or \
-                       col.calculated:
-                       #print(f"Row_metaclass.__new__({col_name=}): setting col.name={col_name}.can_edit to False")
+               #print(f"Row_metaclass({name=}).__new__({col_name=}): "
+               #      f"col_name={col_name}, {hasattr(col, 'can_edit')=}, {dct.get('primary_key', None)=}")
+                if col_name == dct.get('primary_key', None) or \
+                   col_name in dct.get('primary_keys', ()):
+                    assert not col.calculated, f"Row {name}, primary key {col_name} can't be calculated"
+                    assert 'primary_keys' in dct or not hasattr(col, "default"), \
+                           f"Row {name}, primary key {col_name} can't have default"
+                   #print(f"Row_metaclass.__new__({col_name=}): setting col.name={col_name}.can_edit to False")
+                    if col.can_edit is None:
                         col.can_edit = False
-                    else:
-                        col.can_edit = True
-                if not col.calculated and not col.required:
+                elif col.can_edit is None:
+                    col.can_edit = True
+                if hasattr(col, "default"):
                     dct[col.name] = col.default
         return super().__new__(cls, name, bases, dct)
 
@@ -159,7 +170,8 @@ class Row(metaclass=Row_metaclass):
     new values will be written to the database file.
 
     Default values are done with class attributes.  Any missing or empty columns in an imported csv file
-    are not set as attributes and default to the class attribute.
+    are not set as attributes and default to the class attribute.  As a result, row attributes may not
+    be set to None.
 
     Additional non-stored attributes (similar to relational view) are simply done with a standard
     python @property.
@@ -173,22 +185,27 @@ class Row(metaclass=Row_metaclass):
     commands = ()
 
     def __init__(self, **attrs):
-        attrs_in = frozenset(name.strip().lower() for name in attrs.keys())
+        r'''Not called by user app directly.  Use table.insert instead.
+        '''
+        attrs_in = frozenset(name.strip() for name in attrs.keys())
         unknown_attrs = attrs_in.difference(self.stored_names)
         assert not unknown_attrs, f"{self.table_name}.__init__: unknown attrs={tuple(unknown_attrs)}"
         missing_attrs = self.required.difference(attrs_in)
         assert not missing_attrs, f"{self.table_name}.__init__: missing attrs={sorted(missing_attrs)}, " \
                                   f"got {sorted(attrs_in)}"
         for name, value in attrs.items():
-            name = name.strip().lower()
-            python_value = self.column_map[name].to_python(value)
-            if python_value is not None:
-                setattr(self, name, python_value)
+            setattr(self, name, value)
+
+    def __setattr__(self, name, value):
+        if value is None:
+            raise ValueError(f"{self.__class__.__name__}.__setattr__, column {name}: "
+                             "None is illegal value for any row attribute")
+        super().__setattr__(name, value)
 
     def get(self, column_name):
         r'''Returns value as string for display.
         '''
-        return self.column_map[column_name.lower()].convert(getattr(self, column_name))
+        return self.column_map[column_name].convert(getattr(self, column_name))
 
     def check_foreign_keys(self, tables, row_id, raise_exc=True):
         r'''Returns True if all tests pass.
@@ -225,20 +242,18 @@ class Row(metaclass=Row_metaclass):
     def from_csv(cls, header, row, ignore_unknown_cols=False):
         r'''strips both the names in header and the values in row.
 
-        names in header are converted to lowercase as key for cls.column_map.
-
         attrs with an empty value are not loaded, so that they have their default values.
         '''
         attrs = {}
         assert len(header) == len(row), \
                f"{cls.table_name}.from_csv: len(header)={len(header)} != len(row)={len(row)}"
         for name, value in zip(header, row):
-            name = name.strip().lower()
+            name = name.strip()
             value = value.strip()
             if name not in cls.stored_names:
                 if not ignore_unknown_cols:
                     raise AssertionError(f"{cls.table_name}.from_csv: unknown attr={name}")
-            else:
+            elif value:
                 python_value = cls.column_map[name].to_python(value)
                 if python_value is not None:
                     attrs[name] = python_value

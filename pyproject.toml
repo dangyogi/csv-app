@@ -4,9 +4,6 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.package-dir]
-csv_app = "src"
-
 [project]
 name = "csv-app"
 version = "0.0.1"
@@ -17,8 +14,19 @@ license-files = ["LICENSE"]
 requires-python = ">=3.11.2"
 dependencies = ["reportlab>=4.4.9"]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=9.0.3"
+]
+
 [project.urls]
 repository = "https://github.com/dangyogi/csv-app.git"
 
 [project.scripts]
 report = "csv_app.report:run"
+
+[tool.setuptools.package-dir]
+csv_app = "csv_app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

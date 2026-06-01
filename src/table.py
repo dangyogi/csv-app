@@ -60,9 +60,14 @@ class Base_table:
         return errors
 
     def insert(self, **attrs):
+        r'''Attributes may not be set to None.  Instead omit the attribute from `attrs`.
+
+        The values in attrs are python values (not just strings).
+        '''
         self.add_row(self.row_class(**attrs))
 
     def insert_from_csv(self, header, row, ignore_unknown_cols=False, skip_fk_check=False):
+       #print(f"{self.name}.insert_from_csv({header=}, {row=})")
         self.add_row(self.row_class.from_csv(header, row, ignore_unknown_cols=ignore_unknown_cols),
                      skip_fk_check=skip_fk_check)
 
@@ -100,7 +105,6 @@ class Base_table:
         headers = tuple(self.row_class.stored_names)
         header_row = []
         for name in headers:
-            name = name.lower()
             max_width = len(name)
             alignment = self.row_class.column_map[name].alignment
             alignments[name] = alignment
@@ -222,7 +226,7 @@ def load_rows(rows, *custom_tables):
     def table_for_row(row_class):
         if row_class.table_name in custom_map:
             return custom_map[row_class.table_name](row_class)
-        if row_class.primary_key is not None or row_class.primary_keys is not None:
+        if row_class.primary_key is not None or row_class.primary_keys:
             return Table_unique(row_class)
         return Table_by_date(row_class)
     for row_class in rows:
