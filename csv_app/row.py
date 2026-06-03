@@ -29,10 +29,9 @@ class Column:
     r'''Handles reading in, validating, and writing out the cell values for one column.
     '''
     alignment = 'left'
-    omit = False
 
     def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False, 
-                 parse=None, default=None, choices=None, min_width=None, can_edit=None, omit=None):
+                 parse=None, default=None, choices=None, min_width=None, can_edit=None):
         self.name = name
         self.abbr = abbr or name  # for column names in reports
         self.hidden = hidden
@@ -47,7 +46,7 @@ class Column:
         self.calculated = calculated
         if required:
             assert default is None, f"Column {name}: required column can't have default"
-        elif default is None:
+        elif not calculated and default is None:
             self.default = default
         self.required = required
         if default is not None:
@@ -58,31 +57,46 @@ class Column:
             self.choices = frozenset(choices)
         self.min_width = min_width
         self.can_edit = can_edit
-        if omit is not None:
-            self.omit = omit
 
     def to_python(self, csv_value):
+        r'''Converts a string from a csv column to a python value.
+
+        Raises ValueError if csv_value is not a legal value.
+
+        See to_csv(value) for the reverse.
+        '''
         if not isinstance(csv_value, str):
             return self.parse(csv_value)
         s = csv_value.strip()
         if not s:
             return None
-        return self.parse(s)
+        try:
+            return self.parse(s)
+        except InvalidOperation as e:
+            raise ValueError(str(e))
 
     def parse(self, s):
+        r'''Default parse.
+        '''
+        if self.choices and s not in self.choices:
+            raise ValueError(f"{self.name}.parse: {s!r} not in {self.choices}")
         return s
 
     def to_csv(self, value):
+        r'''Converts python value to a string for a csv column.
+
+        See to_python(csv_value) for the reverse.
+        '''
         if value is None:
             return ''
-        return self.convert(value)
+        return self._convert(value)
 
-    def convert(self, value):
-        if value is None:
-            return ""
+    def _convert(self, value):
+        r'''Used by to_csv().
+        '''
         ans = str(value)
-        if self.choices:
-            assert ans in self.choices, f"{self.name}.convert: {ans!r} not in {self.choices}"
+        if self.choices and ans not in self.choices:
+            raise ValueError(f"{self.name}.to_csv: {ans!r} not in {self.choices}")
         return ans
 
 class Custom_column(Column):
@@ -91,47 +105,41 @@ class Custom_column(Column):
 
 class Date_column(Custom_column):
     def parse(self, s):
-        if isinstance(s, date):
-            return s
+       #if isinstance(s, date):
+       #    return s
         try:
             return date.fromisoformat(s)
         except ValueError:
             pass
         return datetime.strptime(s, Date_format).date()
 
-    def convert(self, date_value):
-        if date_value is None:
-            return ""
+    def _convert(self, date_value):
         return date_value.strftime(Date_format)
 
 class Set_column(Custom_column):
     r'''Assumes a set of strings.
     '''
     def parse(self, s):
-        if isinstance(s, set):
-            return s
+       #if isinstance(s, set):
+       #    return s
         return set(x.strip() for x in s.split(','))
 
-    def convert(self, set_value):
-        if set_value is None:
-            return ""
+    def _convert(self, set_value):
         return ','.join(sorted(set_value))
 
 class Bool_column(Custom_column):
     alignment = 'right'
 
     def parse(self, s):
-        if isinstance(s, bool):
-            return s
+       #if isinstance(s, bool):
+       #    return s
         if s == 'True':
             return True
         elif s == 'False':
             return False
         raise ValueError(f"{self.name}.parse({s=}): not a valid bool value")
 
-    def convert(self, bool_value):
-        if bool_value is None:
-            return ""
+    def _convert(self, bool_value):
         if bool_value:
             return "True"
         return "False"
@@ -143,17 +151,31 @@ class Row_metaclass(type):
     def __new__(cls, name, bases, dct):
         if 'columns' in dct:
             dct['column_map'] = {col.name: col for col in dct['columns']}
-            dct['stored_names'] = [col.name for col in dct['columns'] if not col.calculated and not col.omit]
+            dct['stored_names'] = [col.name for col in dct['columns'] if not col.calculated]
             dct['required'] = frozenset(col.name for col in dct['columns'] if col.required)
+            assert dct.get('primary_key') is None or not dct.get('primary_keys', ()), \
+                   f"Row {name} can't have both primary_key and primary_keys"
+            if dct.get('primary_key') is not None:
+                assert dct['primary_key'] in dct['column_map'], \
+                       f"Row {name}, primary key {dct['primary_key']}: not a column"
+            for pkey in dct.get('primary_keys', ()):
+                assert pkey in dct['column_map'], f"Row {name}, {pkey} in primary_keys: not a column"
             for col in dct['columns']:
                 col_name = col.name
-               #print(f"Row_metaclass({name=}).__new__({col_name=}): "
+               #print(f"Row_metaclass({name=}).__new__: "
                #      f"col_name={col_name}, {hasattr(col, 'can_edit')=}, {dct.get('primary_key', None)=}")
                 if col_name == dct.get('primary_key', None) or \
                    col_name in dct.get('primary_keys', ()):
                     assert not col.calculated, f"Row {name}, primary key {col_name} can't be calculated"
-                    assert 'primary_keys' in dct or not hasattr(col, "default"), \
-                           f"Row {name}, primary key {col_name} can't have default"
+                    if dct.get('primary_keys', ()):
+                       #print(f"Row_metaclass({name=}).__new__: {col_name=}, {dct['primary_keys']=}, "
+                       #      f"{col.required=}, {hasattr(col, 'default')=}")
+                        assert col.required or hasattr(col, "default") and col.default is not None, \
+                               f"Row {name}, {col_name} in primary_keys must be required or have default"
+                    else:
+                        assert col.required, f"Row {name}, primary key {col_name} must be required"
+                        assert not hasattr(col, "default"), \
+                               f"Row {name}, primary key {col_name} can't have default"
                    #print(f"Row_metaclass.__new__({col_name=}): setting col.name={col_name}.can_edit to False")
                     if col.can_edit is None:
                         col.can_edit = False
@@ -180,7 +202,7 @@ class Row(metaclass=Row_metaclass):
     primary_keys = None
     foreign_keys = ()
     in_database = True
-    omit = False
+    omit = False  # used by tui-app to omit from menu of tables
     row_popup_commands = 'View/Edit', 'Delete', 'Cancel'
     commands = ()
 
@@ -189,23 +211,38 @@ class Row(metaclass=Row_metaclass):
         '''
         attrs_in = frozenset(name.strip() for name in attrs.keys())
         unknown_attrs = attrs_in.difference(self.stored_names)
-        assert not unknown_attrs, f"{self.table_name}.__init__: unknown attrs={tuple(unknown_attrs)}"
+        assert not unknown_attrs, f"{self.table_name}.__init__: unknown attrs={sorted(unknown_attrs)}"
         missing_attrs = self.required.difference(attrs_in)
-        assert not missing_attrs, f"{self.table_name}.__init__: missing attrs={sorted(missing_attrs)}, " \
-                                  f"got {sorted(attrs_in)}"
+        assert not missing_attrs, f"{self.table_name}.__init__: missing attrs={sorted(missing_attrs)}"
         for name, value in attrs.items():
-            setattr(self, name, value)
+            if value is None:
+                raise ValueError(f"{self.table_name}.__init__, column {name}: "
+                                 "None is illegal value for any row attribute, omit from attrs instead")
+            super().__setattr__(name, value)
 
     def __setattr__(self, name, value):
+        assert name in self.stored_names, \
+               f"{self.table_name}.__setattr__({name=}, {value=}): unknown column"
+        assert self.column_map[name].can_edit, \
+               f"{self.table_name}.__setattr__({name=}, {value=}): can not set non-editable column"
         if value is None:
-            raise ValueError(f"{self.__class__.__name__}.__setattr__, column {name}: "
+            raise ValueError(f"{self.table_name}.__setattr__, column {name}: "
                              "None is illegal value for any row attribute")
         super().__setattr__(name, value)
+
+    def __delattr__(self, name):
+        assert name in self.stored_names, \
+               f"{self.table_name}.__delattr__({name=}): unknown column"
+        assert self.column_map[name].can_edit, \
+               f"{self.table_name}.__delattr__({name=}): can not del non-editable column"
+        assert not self.column_map[name].required, \
+               f"{self.table_name}.__delattr__({name=}): can not del required column"
+        super().__delattr__(name)
 
     def get(self, column_name):
         r'''Returns value as string for display.
         '''
-        return self.column_map[column_name].convert(getattr(self, column_name))
+        return self.csv_value(column_name)
 
     def check_foreign_keys(self, tables, row_id, raise_exc=True):
         r'''Returns True if all tests pass.
@@ -214,17 +251,19 @@ class Row(metaclass=Row_metaclass):
         for table_name in self.foreign_keys:
             table = tables[table_name]
             if table.row_class.primary_key is not None:
-                key = getattr(self, table.row_class.primary_key)
+                key = getattr(self, table.row_class.primary_key, None)
+               #print(f"{self.table_name}.check_foreign_keys: {table.row_class.primary_key=}, {key=}")
                 if key is None:
                     continue
             else:
                 assert table.row_class.primary_keys, \
-                       f"{self.name}.check_foreign_keys: {table=} has no primary_key"
-                key = tuple(getattr(self, key) for key in table.row_class.primary_keys)
+                       f"{self.name}.check_foreign_keys: {table_name=} has no primary_key"
+                key = tuple(getattr(self, key, None) for key in table.row_class.primary_keys)
+               #print(f"{self.table_name}.check_foreign_keys: {table.row_class.primary_keys=}, {key=}")
                 if any(k is None for k in key):
                     continue
             if key not in table:
-                error_msg = f"{self.__class__.__name__}.check_foreign_keys({row_id=}): " \
+                error_msg = f"{self.table_name}.check_foreign_keys({row_id=}): " \
                             f"{key=} not in {table_name}"
                 if raise_exc:
                     raise KeyError(error_msg)
@@ -260,7 +299,7 @@ class Row(metaclass=Row_metaclass):
         return cls(**attrs)
 
     def csv_value(self, name):
-        return self.column_map[name].to_csv(getattr(self, name))
+        return self.column_map[name].to_csv(getattr(self, name, None))
 
     def key(self):
         if self.primary_key is not None:
@@ -286,54 +325,8 @@ class Row(metaclass=Row_metaclass):
         for i, attr in enumerate(self.stored_names):
             if i:
                 print(', ', end='')
-            print(f"{attr}={getattr(self, attr)}", end='')
+            print(f"{attr}={getattr(self, attr, None)}", end='')
         print()
-
-
-# FIX: Not used...
-def convert(s):
-    r'''Converts a string, s, into one of the following python objects.
-
-    Strips whitespace from s first.
-
-    These are tried in the following order:
-
-      - None (if s is empty string)
-      - int
-      - date in ISO format
-      - date in Mon dd, yy format
-      - Decimal (with two digits after the '.')
-      - float
-      - else str (stripped)
-    '''
-    s = s.strip()
-    if s == "":
-        return None
-    try:
-        return int(s)
-    except ValueError:
-        pass
-    try:
-        return date.fromisoformat(s)
-    except ValueError:
-        pass
-    try:
-        return datetime.strptime(s, "%b %d, %y").date()
-    except ValueError:
-        pass
-    i = s.find('.')
-    if i >= 0 and i + 3 == len(s):
-        # Has 2 chars after the '.'
-        try:
-            return Decimal(s)
-        except InvalidOperation:
-            pass
-    try:
-        return float(s)
-    except ValueError:
-        pass
-    return s
-
 
 
 __all__ = "MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY " \
