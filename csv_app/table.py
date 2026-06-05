@@ -38,10 +38,10 @@ class Base_table:
 
     @property
     def name(self):
-        return self.row_class.__name__
+        return self.row_class.table_name
 
     def get_rows(self, app):
-       #print(f"{self.__class__.__name__}({self.name=}).get_rows", file=app.trace_file)
+       #print(f"{self.name}({self.name=}).get_rows", file=app.trace_file)
         return list(self.values())
 
     def execute(self, app, command):
@@ -120,7 +120,7 @@ class Base_table:
             values = []
             for name in headers:
                 value = row.csv_value(name)
-                if value is None:
+                if not value:
                     values.append(' ' * widths[name])
                 else:
                     values.append(align(value, widths[name], alignments[name]))
@@ -152,6 +152,12 @@ class Table_by_date(Base_table, list):
     def __init__(self, row_class):
         Base_table.__init__(self, row_class)
         list.__init__(self)
+
+    def append(self, item):
+        raise NotImplementedError(f"{self.name}.append")
+
+    def extend(self, item):
+        raise NotImplementedError(f"{self.name}.extend")
 
     def first_date(self, date):
         r'''Returns index to the first date == `date`.
@@ -228,6 +234,7 @@ def load_rows(rows, *custom_tables):
             return custom_map[row_class.table_name](row_class)
         if row_class.primary_key is not None or row_class.primary_keys:
             return Table_unique(row_class)
+        assert 'date' in row_class.required, f"{row_class.table_name} must have primary_key/s or date"
         return Table_by_date(row_class)
     for row_class in rows:
         Tables[row_class.table_name] = table_for_row(row_class)
@@ -259,16 +266,17 @@ def load_database(csv_filename=None, ignore_unknown_cols=False):
 def save_database(csv_filename=None):
     if csv_filename is None:
         csv_filename = Database_filename
-    temp_filename = csv_filename[:-4] + '-new.csv'
+    temp_filename = csv_filename + '-new'
     with open(temp_filename, 'w') as f:
         for table in Tables.values():
             if table.row_class.in_database:
                 table.to_csv(f, add_empty_row=True)
-    save_filename = csv_filename[:-4] + '-save.csv'
+    save_filename = csv_filename + '-save'
     if os.path.exists(save_filename):
         os.remove(save_filename)
-    os.link(csv_filename, save_filename)     # creates hard link
-    os.replace(temp_filename, csv_filename)  # renames atomically, replacing csv_filename
+    os.link(csv_filename, save_filename)     # creates hard link: save_filename points to csv_filename
+    os.replace(temp_filename, csv_filename)  # renames temp_filename to csv_filename atomically,
+                                             # replacing csv_filename
 
 def load_csv(csv_filename, from_scratch=True, ignore_unknown_cols=False):
     r'''Loads table from csv_filename.

@@ -70,11 +70,13 @@ Steps:
 # canvas.rotate(theta)
 # canvas.skew(alpha, beta)
 
+import os
 from pathlib import Path
 import sys
 
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import landscape as Landscape, portrait as Portrait, letter, inch
+from reportlab.lib.pagesizes import landscape as Landscape, portrait as Portrait, letter
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 
 __all__ = "set_canvas get_pagesize set_landscape canvas_showPage canvas_save Report " \
@@ -191,11 +193,9 @@ class Report:
 
     def print(self, header_row=None, file=sys.stdout):
         if header_row is not None:
-            from subprocess import run
             import io
             assert file == sys.stdout, "report.print file may not be specified with header_row"
-            result = run(('stty', 'size'), capture_output=True, check=True)
-            height, width = (int(x) for x in result.stdout.split())
+            width, height = os.get_terminal_size()
             height -= 1  # less takes one line at the bottom
            #print(f"{height=}, {width=}")
             file = io.StringIO()
@@ -208,6 +208,7 @@ class Report:
             row.print(file)
             lines_on_page += 1
         if header_row is not None:
+            from subprocess import run
             run(('less', '-c'), input=file.getvalue(), text=True, check=True)
 
     def make_col_name(self, col_name):
@@ -274,9 +275,9 @@ class Cell:
             self.fontName = self.col.report.default_font
         self.text_format = text_format or col.text_format
         self.text2_format = text2_format or col.text2_format
-        self.width1 = Canvas.stringWidth(self.format_text(self.text, self.text_format),
-                                         fontName=self.fontName,
-                                         fontSize=self.size)
+        self.width1 = stringWidth(self.format_text(self.text, self.text_format),
+                                  fontName=self.fontName,
+                                  fontSize=self.size)
         self.text2 = None
         self.bold2 = None
         self.width2 = 0
@@ -300,9 +301,9 @@ class Cell:
         if text2_format is not None:
             self.text2_format = text2_format
         self.width1 += self.col.report.text2_gap_percent * self.size
-        self.width2 = Canvas.stringWidth(self.format_text(self.text2, self.text2_format),
-                                         fontName=self.fontName2,
-                                         fontSize=self.size)
+        self.width2 = stringWidth(self.format_text(self.text2, self.text2_format),
+                                  fontName=self.fontName2,
+                                  fontSize=self.size)
 
     def set_sizes(self):
         self.col.set_width(self.my_width(), self.my_width_chars())
@@ -666,7 +667,6 @@ class Row_template(Value):
 
 
 def dump_table(table_name, pdf=False, default_fontsize=13):
-    from itertools import chain
     sys.path.append('.')
     import database
 
@@ -725,7 +725,6 @@ def dump_table(table_name, pdf=False, default_fontsize=13):
 
 # FIX: Not used... ??
 def dump_data(report_name, headers, data, pdf=False, default_fontsize=13):
-    from itertools import chain
     sys.path.append('.')
     import database
 
