@@ -66,8 +66,20 @@ def test_table_by_date_sorting():
     table.insert(date=date(2026, 6, 1), message="Middle log")
     table.insert(date=date(2026, 12, 25), message="Late log")
     table.insert(date=date(2026, 1, 1), message="Early log")
+    table.insert(date=date(2026, 1, 1), message="Early log 2")
+    table.insert(date=date(2026, 12, 25), message="Late log 2")
+    table.insert(date=date(2026, 6, 1), message="Middle log 2")
     
     # Verify binary search forced chronological sequence layout
     assert table[0].message == "Early log"
-    assert table[1].message == "Middle log"
-    assert table[2].message == "Late log"
+    assert table[1].message == "Early log 2"
+    assert table[2].message == "Middle log"
+    assert table[3].message == "Middle log 2"
+    assert table[4].message == "Late log"
+    assert table[5].message == "Late log 2"
+
+    selected = list(table.get_rows(None, date__ge=date(2026, 6, 1), date__lt=date(2026, 12, 31)))
+    assert selected[0].message == "Middle log"
+    assert selected[1].message == "Middle log 2"
+    assert selected[2].message == "Late log"
+    assert selected[3].message == "Late log 2"

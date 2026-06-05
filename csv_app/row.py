@@ -155,11 +155,18 @@ class Row_metaclass(type):
             dct['required'] = frozenset(col.name for col in dct['columns'] if col.required)
             assert dct.get('primary_key') is None or not dct.get('primary_keys', ()), \
                    f"Row {name} can't have both primary_key and primary_keys"
+            has_key = False
             if dct.get('primary_key') is not None:
                 assert dct['primary_key'] in dct['column_map'], \
                        f"Row {name}, primary key {dct['primary_key']}: not a column"
+                has_key = True
             for pkey in dct.get('primary_keys', ()):
                 assert pkey in dct['column_map'], f"Row {name}, {pkey} in primary_keys: not a column"
+                has_key = True
+           #if not has_key and 'row_num' not in dct['column_map']:
+           #    row_num = Column('row_num', parse=int, calculated=True)
+           #    dct['columns'] = tuple([row_num] + list(dct['columns']))
+           #    dct['column_map']['row_num'] = row_num
             for col in dct['columns']:
                 col_name = col.name
                #print(f"Row_metaclass({name=}).__new__: "
@@ -230,6 +237,9 @@ class Row(metaclass=Row_metaclass):
                              "None is illegal value for any row attribute")
         super().__setattr__(name, value)
 
+    def set_row_num(self, row_num):
+        super().__setattr__('row_num', row_num)
+
     def __delattr__(self, name):
         assert name in self.stored_names, \
                f"{self.table_name}.__delattr__({name=}): unknown column"
@@ -243,6 +253,39 @@ class Row(metaclass=Row_metaclass):
         r'''Returns value as string for display.
         '''
         return self.csv_value(column_name)
+
+    def selected(self, app, **select):
+        r'''Checks select clause for table.get_rows.
+        '''
+        for key, value in select.items():
+            if '__' in key:
+                key, op = key.split('__')
+            else:
+                op = 'eq'
+            my_value = getattr(self, key, None)
+           #print(f"row({self.table_name}).selected: {key=}, {op=}, {my_value=}, {value=}")
+            match op:
+                case 'lt':
+                    if not (my_value < value):
+                        return False
+                case 'le':
+                    if not (my_value <= value):
+                        return False
+                case 'eq':
+                    if my_value != value:
+                        return False
+                case 'ne':
+                    if my_value == value:
+                        return False
+                case 'ge':
+                    if not (my_value >= value):
+                        return False
+                case 'gt':
+                    if not (my_value > value):
+                        return False
+                case _:
+                    raise AssertionError(f"row({self.table_name}).selected got unknown {op=}")
+        return True
 
     def check_foreign_keys(self, tables, row_id, raise_exc=True):
         r'''Returns True if all tests pass.

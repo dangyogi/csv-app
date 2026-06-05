@@ -165,6 +165,23 @@ def test_delattr_error(test_row, attr):
         delattr(test_row, attr)
 
 
+@pytest.mark.parametrize("key, t, f", [
+    ('col1__lt', 11, 10),
+    ('col1__le', 10, 9),
+    ('col1__eq', 10, 9),
+    ('col1', 10, 9),
+    ('col1__ne', 9, 10),
+    ('col1__ge', 10, 11),
+    ('col1__gt', 9, 10),
+])
+def test_selected(key, t, f):
+    class Test_row(Row):
+        columns = Column("col1", parse=int),
+    row = Test_row(col1=10)
+    assert row.selected(None, **{key: t})
+    assert not row.selected(None, **{key: f})
+
+
 def row_class(*keys):
     if len(keys) == 1:
         return Mock(primary_key=keys[0], primary_keys=None)

@@ -40,9 +40,9 @@ class Base_table:
     def name(self):
         return self.row_class.table_name
 
-    def get_rows(self, app):
+    def get_rows(self, app, **select):
        #print(f"{self.name}({self.name=}).get_rows", file=app.trace_file)
-        return list(self.values())
+        return [row for row in self.values() if row.selected(app, **select)]
 
     def execute(self, app, command):
         print(f"{self.name=}.execute({command=})", file=app.trace_file)
@@ -96,7 +96,7 @@ class Base_table:
         return num_rows
 
     def to_csv(self, file, add_table_name=True, add_empty_row=False):
-        r'''Writes itself in database csv format to file.
+        r'''Writes itself in database csv format to `file`.
         '''
         if add_table_name:
             print(self.name, file=file)                 # first line is name of table (only one column)
@@ -210,11 +210,12 @@ class Table_by_date(Base_table, list):
     def values(self):
         return self
 
-    def get_rows(self, app):
+    def get_rows(self, app, **select):
         ans = []
         for row_num, row in enumerate(self, 1):
-            row.row_num = row_num
-            ans.append(row)
+            if row.selected(app, **select):
+                row.set_row_num(row_num)
+                ans.append(row)
        #print(f"Table_by_date({self.name=}).get_rows: {ans[0].row_num=}", file=app.trace_file)
         return ans
 
