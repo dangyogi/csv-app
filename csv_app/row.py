@@ -58,6 +58,10 @@ class Column:
         self.min_width = min_width
         self.can_edit = can_edit
 
+    def validate(self, s):
+        if self.parse(s) is None and self.required:
+            raise ValueError(f"{self.name}: requires a value")
+
     def to_python(self, csv_value):
         r'''Converts a string from a csv column to a python value.
 
@@ -233,9 +237,11 @@ class Row(metaclass=Row_metaclass):
         assert self.column_map[name].can_edit, \
                f"{self.table_name}.__setattr__({name=}, {value=}): can not set non-editable column"
         if value is None:
-            raise ValueError(f"{self.table_name}.__setattr__, column {name}: "
-                             "None is illegal value for any row attribute")
-        super().__setattr__(name, value)
+            delattr(self, name)
+           #FIX: raise ValueError(f"{self.table_name}.__setattr__, column {name}: "
+           #                 "None is illegal value for any row attribute")
+        else:
+            super().__setattr__(name, value)
 
     def set_row_num(self, row_num):
         super().__setattr__('row_num', row_num)
@@ -253,6 +259,15 @@ class Row(metaclass=Row_metaclass):
         r'''Returns value as string for display.
         '''
         return self.csv_value(column_name)
+
+    def set(self, column_name, s):
+        r'''Takes value as string.
+        '''
+        column = self.column_map[column_name]
+        value = column.to_python(s)
+        if value is None and column.required:
+            raise ValueError(f"{column_name}: requires a value")
+        setattr(self, column_name, value)
 
     def selected(self, app, **select):
         r'''Checks select clause for table.get_rows.
