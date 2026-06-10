@@ -83,7 +83,7 @@ class Column:
         r'''Default parse.
         '''
         if self.choices and s not in self.choices:
-            raise ValueError(f"{self.name}.parse: {s!r} not in {self.choices}")
+            raise ValueError(f"{self.name}: {s!r} not in {self.choices}")
         return s
 
     def to_csv(self, value):
@@ -141,7 +141,7 @@ class Bool_column(Custom_column):
             return True
         elif s == 'False':
             return False
-        raise ValueError(f"{self.name}.parse({s=}): not a valid bool value")
+        raise ValueError(f"{self.name}: {s!r} not a valid bool value")
 
     def _convert(self, bool_value):
         if bool_value:
