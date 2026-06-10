@@ -148,10 +148,15 @@ def test_setattr_error1(test_row, attr):
         setattr(test_row, attr, "xx")
 
 
-@pytest.mark.parametrize("attr", ('req1', 'with_default', 'no_default'))
+@pytest.mark.parametrize("attr", ('req1',))
 def test_setattr_error_none(test_row, attr):
     with pytest.raises(ValueError):
         setattr(test_row, attr, None)
+
+
+@pytest.mark.parametrize("attr", ('with_default', 'no_default'))
+def test_setattr_none_ok(test_row, attr):
+    setattr(test_row, attr, None)
 
 
 @pytest.mark.parametrize("attr", ('no_default',))

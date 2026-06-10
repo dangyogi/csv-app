@@ -245,9 +245,11 @@ class Row(metaclass=Row_metaclass):
         assert self.column_map[name].can_edit, \
                f"{self.table_name}.__setattr__({name=}, {value=}): can not set non-editable column"
         if value is None:
-            delattr(self, name)
-           #FIX: raise ValueError(f"{self.table_name}.__setattr__, column {name}: "
-           #                 "None is illegal value for any row attribute")
+            if name in self.__dict__:
+                try:
+                    delattr(self, name)
+                except AssertionError as exc:
+                    raise ValueError(str(exc))
         else:
             super().__setattr__(name, value)
 
