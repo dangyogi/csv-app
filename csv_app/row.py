@@ -64,6 +64,9 @@ class Column:
         if self.parse(s) is None and self.required:
             raise ValueError(f"{self.name}: requires a value")
 
+    def column_attr_pair(self, row):
+        return None
+
     def to_python(self, csv_value):
         r'''Converts a string from a csv column to a python value.
 
