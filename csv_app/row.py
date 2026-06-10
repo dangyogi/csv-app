@@ -3,6 +3,8 @@
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, timedelta
 
+from tui_app.tui import row_screen
+
 
 # date.weekday numbers:
 MONDAY    = 0
@@ -213,9 +215,12 @@ class Row(metaclass=Row_metaclass):
     primary_keys = None
     foreign_keys = ()
     in_database = True
-    omit = False  # used by tui-app to omit from menu of tables
-    row_popup_commands = 'View/Edit', 'Delete', 'Cancel'
-    commands = ()
+    omit = False                                 # used by tui-app to omit from menu of tables
+    row_popup_commands_start = 'View/Edit',
+    row_popup_command_fns = ()                   # names of methods to execute the commands.
+                                                 # these methods take a single (tui) app parameter
+    row_popup_commands_end = 'Delete', 'Cancel'
+    row_screen_commands = ()
 
     def __init__(self, **attrs):
         r'''Not called by user app directly.  Use table.insert instead.
@@ -254,6 +259,10 @@ class Row(metaclass=Row_metaclass):
         assert not self.column_map[name].required, \
                f"{self.table_name}.__delattr__({name=}): can not del required column"
         super().__delattr__(name)
+
+    @property
+    def row_popup_commands(self):
+        return self.row_popup_commands_start + self.row_popup_command_fns + self.row_popup_commands_end
 
     def get(self, column_name):
         r'''Returns value as string for display.
@@ -372,8 +381,22 @@ class Row(metaclass=Row_metaclass):
         return str(self.row_num)
 
     def execute(self, app, command):
-        print(f"Row({self.table_name=}).execute: {command=} unknown", file=app.trace_file)
-        raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
+        r'''Run from row popup on table screen.
+        '''
+        print(f"Row({self.table_name=}).execute({command=})", file=app.trace_file)
+        match command:
+            case "View/Edit":
+                return row_screen(self, app.screen)
+            case "Delete":
+                self.table.delete_row(self)
+                app.set_changed()
+                return None
+            case "Cancel":
+                return None
+        if command not in self.row_popup_commands:
+            print(f"Row({self.table_name=}).execute: {command=} unknown", file=app.trace_file)
+            raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
+        return getattr(self, command)(app)
 
     def dump(self):
         r'''Appends attr values onto end of current print line.

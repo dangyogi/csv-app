@@ -23,14 +23,11 @@ def align(value, width, alignment):
 class Base_table:
     def __init__(self, row_class):
         self.row_class = row_class
+        row_class.table = self
 
     @property
     def screen_popup_commands(self):
         return [table.name for table in Tables.values() if not table.row_class.omit] + ['Save']
-
-    @property
-    def row_popup_commands(self):
-        return self.row_class.row_popup_commands
 
     @property
     def columns(self):
@@ -148,6 +145,9 @@ class Table_unique(Base_table, dict):
         assert key not in self, f"{self.name}.insert: Duplicate {key=}"
         self[key] = row
 
+    def delete_row(self, row):
+        del self[row.key()]
+
 class Table_by_date(Base_table, list):
     def __init__(self, row_class):
         Base_table.__init__(self, row_class)
@@ -206,6 +206,9 @@ class Table_by_date(Base_table, list):
         list.insert(self, i, row)
         if not skip_fk_check:
             row.check_foreign_keys(Tables, row.date, raise_exc=True)
+
+    def delete_row(self, row):
+        del self[row.row_num]
 
     def values(self):
         return self
