@@ -1,3 +1,9 @@
 - add support to spill very long fields over to the next line in reports
 - ./report.py:# FIX: Not used... ??
-- ./row.py:# FIX: Not used...
+- smtp2go (requires signing up with an email at your own domain)
+- brevo created account with google signin
+  - SMTP server: smtp-relay.brevo.com
+  - port: 587
+  - login: aed342001@smtp-brevo.com
+- signal-cli
+- twilio for SMS (roughly $0.01/msg)

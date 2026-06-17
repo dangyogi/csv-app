@@ -3,7 +3,7 @@
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, timedelta
 
-from tui_app.tui import row_screen
+from tui_app.row_screen import row_screen
 
 
 # date.weekday numbers:
@@ -24,7 +24,8 @@ def abbr_month(m):
     '''
     return Months_abbreviated[m]
 
-Date_format = "%b %d, %y"
+Date_format = "%b %d, %y"               # Nov 03, 26
+Datetime_format = "%I:%M%P, %b %d, %y"  # 01:14pm, Nov 03, 26
 
 
 class Column:
@@ -124,6 +125,17 @@ class Date_column(Custom_column):
 
     def _convert(self, date_value):
         return date_value.strftime(Date_format)
+
+class Datetime_column(Custom_column):
+    def parse(self, s):
+        try:
+            return datetime.fromisoformat(s)
+        except ValueError:
+            pass
+        return datetime.strptime(s, Datetime_format)
+
+    def _convert(self, date_value):
+        return date_value.strftime(Datetime_format)
 
 class Set_column(Custom_column):
     r'''Assumes a set of strings.
@@ -416,8 +428,8 @@ class Row(metaclass=Row_metaclass):
 
 
 __all__ = "MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY " \
-          "date datetime timedelta abbr_month Date_format " \
-          "Decimal Column Date_column Set_column Bool_column Row create_database_py".split()
+          "date datetime timedelta abbr_month Date_format Datetime_format " \
+          "Decimal Column Date_column Datetime_column Set_column Bool_column Row create_database_py".split()
 
 
 def create_database_py(Rows, table_module="tables"):
