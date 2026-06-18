@@ -68,6 +68,8 @@ class Action:
 class Task(Action):
     r'''Made up of several Steps.
     '''
+    is_task = True
+
     def __init__(self, id, *prereqs, column_break=False, can_rerun_after_commit=False, commits_task=False):
         super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit, commits_task=commits_task)
         self.column_break = column_break
@@ -89,6 +91,8 @@ class Task(Action):
 class Step(Action):
     r'''A single function.
     '''
+    is_task = False
+
     def __init__(self, id, task, fn, *prereqs, can_rerun_after_commit=False, commits_task=False):
         super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit, commits_task=commits_task)
         self.task = task
