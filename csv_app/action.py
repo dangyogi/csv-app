@@ -18,11 +18,16 @@ def register(action):
     Dependents[action.id].update(action.prereqs)
 
 def reset():
+    r'''Run when a new month is created to start all over again...
+    '''
     for action in Actions.values():
         action.reset()
 
 
 class Action:
+    column_break = False
+    task = None
+
     def __init__(self, id, *prereqs, can_rerun_after_commit=False, commits_task=False):
         self.id = id
         self.prereqs = frozenset(prereqs)
@@ -31,14 +36,22 @@ class Action:
         register(self)
 
     @property
+    def number(self):
+        return self.step.number
+
+    @property
     def name(self):
         return self.step.name
 
+    @property
+    def committed(self):
+        return self.step.state == 'committed'
+
     def has_run(self):
-        return self.step.state != "not-run"
+        return self.step.state is not None and self.step.state != "not-run"
 
     def invalidate(self):
-        if self.step.state != "not-run":
+        if self.has_run():
             self.step.state = "not-run"
             if self.id in Dependents:
                 for id in Dependents[self.id]:
@@ -55,12 +68,16 @@ class Action:
 class Task(Action):
     r'''Made up of several Steps.
     '''
-    def __init__(self, id, *prereqs, can_rerun_after_commit=False, commits_task=False):
+    def __init__(self, id, *prereqs, column_break=False, can_rerun_after_commit=False, commits_task=False):
         super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit, commits_task=commits_task)
+        self.column_break = column_break
         self.steps = []
 
     def add_step(self, step):
         self.steps.append(step)
+
+    def can_run(self):
+        return False
 
     def commit(self):
         self.step.state = "committed"
@@ -81,17 +98,19 @@ class Step(Action):
 
     def can_run(self):
         return (not self.committed or self.can_rerun_after_commit) \
-           and all(prereq.has_run() for prereq in self.prereqs)
+           and all(Actions[prereq].has_run() for prereq in self.prereqs)
 
     def run(self, *fn_args, **fn_kws):
-        self.fn(self, *fn_args, **fn_kws)
-        if self.step.state == "run":
-            self.step.state = "rerun"
-        else:
-            self.step.state = "run"
-        self.step.last_run = datetime.now()
-        if self.commits_task:
-            self.task.commit()
+        error = self.fn(self, *fn_args, **fn_kws)
+        if not error:
+            if self.step.state == "run":
+                self.step.state = "rerun"
+            else:
+                self.step.state = "run"
+            self.step.last_run = datetime.now()
+            if self.commits_task:
+                self.task.commit()
+        return error
 
 
 class Steps(Row):
