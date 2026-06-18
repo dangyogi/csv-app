@@ -45,6 +45,7 @@ class Base_table:
         print(f"{self.name=}.execute({command=})", file=app.trace_file)
         if command == 'Save':
            print(f"{self.name=}.execute('Save'): not yet implemented", file=app.trace_file)
+           app.set_changed()
         raise ValueError(f"{self.name=}.execute: {command=} unknown")
 
     def check_foreign_keys(self):
