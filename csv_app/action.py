@@ -28,10 +28,9 @@ class Action:
     column_break = False
     task = None
 
-    def __init__(self, id, *prereqs, can_rerun_after_commit=False, commits_task=False):
+    def __init__(self, id, *prereqs, can_rerun_after_commit=False):
         self.id = id
         self.prereqs = frozenset(prereqs)
-        self.commits_task = commits_task
         self.can_rerun_after_commit = can_rerun_after_commit
         register(self)
 
@@ -57,6 +56,13 @@ class Action:
                 for id in Dependents[self.id]:
                     Actions[id].invalidate()
 
+    def disable(self):
+        self.step.state = "disabled"
+
+    @property
+    def disabled(self):
+        return self.step.state == 'disabled'
+
     def reset(self):
         self.step.reset()
 
@@ -70,8 +76,8 @@ class Task(Action):
     '''
     is_task = True
 
-    def __init__(self, id, *prereqs, column_break=False, can_rerun_after_commit=False, commits_task=False):
-        super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit, commits_task=commits_task)
+    def __init__(self, id, *prereqs, column_break=False, can_rerun_after_commit=False):
+        super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit)
         self.column_break = column_break
         self.steps = []
 
@@ -93,15 +99,22 @@ class Step(Action):
     '''
     is_task = False
 
-    def __init__(self, id, task, fn, *prereqs, can_rerun_after_commit=False, commits_task=False):
-        super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit, commits_task=commits_task)
+    def __init__(self, id, task, fn, *prereqs, can_rerun=False, can_rerun_after_commit=False, commits_task=False,
+                 disable_prereqs=False):
+        super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit)
         self.task = task
         if task is not None:
             task.add_step(self)
         self.fn = fn
+        self.can_rerun = can_rerun
+        self.commits_task = commits_task
+        self.disable_prereqs = disable_prereqs
 
     def can_run(self):
-        return (not self.committed or self.can_rerun_after_commit) \
+        return not self.disabled \
+           and (   not self.has_run()
+                or (not self.committed and self.can_rerun)
+                or (self.committed and self.can_rerun_after_commit)) \
            and all(Actions[prereq].has_run() for prereq in self.prereqs)
 
     def run(self, *fn_args, **fn_kws):
@@ -113,7 +126,10 @@ class Step(Action):
                 self.step.state = "run"
             self.step.last_run = datetime.now()
             if self.commits_task:
-                self.task.commit()
+                self.task.commit()  # do this before disable, so that disable overrides commit
+            if self.disable_prereqs:
+                for prereq in self.prereqs:
+                    Actions[prereq].disable()
         return error
 
 
@@ -122,7 +138,7 @@ class Steps(Row):
         Column("id", parse=int, required=True),   # same as Action
         Column("number", required=True),
         Column("name", required=True),
-        Column("state", choices="not-run run rerun committed".split()),
+        Column("state", choices="not-run run rerun committed disabled".split()),
         Datetime_column("last_run"),
     )
     primary_key = 'id'
