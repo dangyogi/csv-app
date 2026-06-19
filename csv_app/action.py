@@ -6,11 +6,15 @@ from .row import *
 from .table import Database
 
 
-__all__ = "reset Task Step Steps".split()
+__all__ = "reset ActionFailed Task Step Steps".split()
 
 
 Actions = {}                    # {id: action}
 Dependents = defaultdict(set)   # {prereq: {dependants}}
+
+
+class ActionFailed(Exception):
+    pass
 
 
 def register(action):
@@ -117,20 +121,25 @@ class Step(Action):
                 or (self.committed and self.can_rerun_after_commit)) \
            and all(Actions[prereq].has_run() for prereq in self.prereqs)
 
-    def run(self, *fn_args, **fn_kws):
-        error = self.fn(self, *fn_args, **fn_kws)
-        if not error:
-            if self.step.state == "run":
-                self.step.state = "rerun"
-            else:
-                self.step.state = "run"
-            self.step.last_run = datetime.now()
-            if self.commits_task:
-                self.task.commit()  # do this before disable, so that disable overrides commit
-            if self.disable_prereqs:
-                for prereq in self.prereqs:
-                    Actions[prereq].disable()
-        return error
+    def execute(self, app, *fn_args, **fn_kws):
+        try:
+            return self.fn(self, app, *fn_args, **fn_kws)
+        except ActionFailed as e:
+            app.screen.show_error(str(e))
+            return None
+
+    def mark_run(self, app):
+        if self.step.state == "run":
+            self.step.state = "rerun"
+        else:
+            self.step.state = "run"
+        self.step.last_run = datetime.now()
+        if self.commits_task:
+            self.task.commit()  # do this before disable, so that disable overrides commit
+        if self.disable_prereqs:
+            for prereq in self.prereqs:
+                Actions[prereq].disable()
+        return 'REFRESH'
 
 
 class Steps(Row):
