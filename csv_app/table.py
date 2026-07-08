@@ -38,13 +38,13 @@ class Base_table:
         return self.row_class.table_name
 
     def get_rows(self, app, **select):
-       #print(f"{self.name}({self.name=}).get_rows", file=app.trace_file)
+       #trace(f"{self.name}({self.name=}).get_rows")
         return [row for row in self.values() if row.selected(app, **select)]
 
     def execute(self, app, command):
-        print(f"{self.name=}.execute({command=})", file=app.trace_file)
+        trace(f"{self.name=}.execute({command=})")
         if command == 'Save':
-           print(f"{self.name=}.execute('Save'): not yet implemented", file=app.trace_file)
+           trace(f"{self.name=}.execute('Save'): not yet implemented")
            app.set_changed()
         raise ValueError(f"{self.name=}.execute: {command=} unknown")
 
@@ -220,7 +220,7 @@ class Table_by_date(Base_table, list):
             if row.selected(app, **select):
                 row.set_row_num(row_num)
                 ans.append(row)
-       #print(f"Table_by_date({self.name=}).get_rows: {ans[0].row_num=}", file=app.trace_file)
+       #trace(f"Table_by_date({self.name=}).get_rows: {ans[0].row_num=}")
         return ans
 
 Tables = {}
@@ -246,7 +246,7 @@ def load_rows(rows, *custom_tables):
     Database.load()
 
 
-__all__ = "Decimal date datetime timedelta abbr_month Tables Database load_rows " \
+__all__ = "Decimal date datetime timedelta abbr_month trace Tables Database load_rows " \
           "Table_unique Table_by_date " \
           "load_database save_database load_csv load_all clear_all check_foreign_keys " \
           "CSV_dialect CSV_format set_database_filename run".split()

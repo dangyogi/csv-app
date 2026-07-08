@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, timedelta
 
 from tui_app.row_screen import row_screen
+from .trace import trace
 
 
 # date.weekday numbers:
@@ -400,7 +401,7 @@ class Row(metaclass=Row_metaclass):
     def execute(self, app, command):
         r'''Run from row popup on table screen.
         '''
-        print(f"Row({self.table_name=}).execute({command=})", file=app.trace_file)
+        trace(f"Row({self.table_name=}).execute({command=})")
         match command:
             case "View/Edit":
                 return row_screen(self, app.screen)
@@ -411,7 +412,7 @@ class Row(metaclass=Row_metaclass):
             case "Cancel":
                 return None
         if command not in self.row_popup_commands:
-            print(f"Row({self.table_name=}).execute: {command=} unknown", file=app.trace_file)
+            trace(f"Row({self.table_name=}).execute: {command=} unknown")
             raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
         return getattr(self, command)(app)
 
@@ -428,7 +429,7 @@ class Row(metaclass=Row_metaclass):
 
 
 __all__ = "MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY " \
-          "date datetime timedelta abbr_month Date_format Datetime_format " \
+          "date datetime timedelta abbr_month Date_format Datetime_format trace " \
           "Decimal Column Date_column Datetime_column Set_column Bool_column Row create_database_py".split()
 
 

@@ -19,7 +19,8 @@ class ActionFailed(Exception):
 
 def register(action):
     Actions[action.id] = action
-    Dependents[action.id].update(action.prereqs)
+    for id in action.prereqs:
+        Dependents[id].add(action.id)
 
 def reset():
     r'''Run when a new month is created to start all over again...
@@ -48,31 +49,38 @@ class Action:
 
     @property
     def committed(self):
-        return self.step.state == 'committed'
+        return self.step.committed
 
+    @property
     def has_run(self):
-        return self.step.state is not None and self.step.state != "not-run"
+        return self.step.has_run
 
     def invalidate(self):
-        if self.has_run():
-            self.step.state = "not-run"
-            if self.id in Dependents:
-                for id in Dependents[self.id]:
-                    Actions[id].invalidate()
+        trace(f"{self.__class__.__name__}({self.name=}).invalidate()")
+        self.step.invalidate()
+
+    def invalidate_dependents(self):
+        trace(f"{self.__class__.__name__}({self.name=}).invalidate_dependents()")
+        self.step.invalidate_dependents()
 
     def disable(self):
-        self.step.state = "disabled"
+        trace(f"{self.__class__.__name__}({self.name=}).disable()")
+        self.step.disable()
 
     @property
     def disabled(self):
-        return self.step.state == 'disabled'
+        return self.step.disabled
 
     def reset(self):
+        trace(f"{self.__class__.__name__}({self.name=}).reset()")
         self.step.reset()
 
     @property
     def step(self):
         return Database.Steps[self.id]
+
+    def app_is(self, app):
+        self.app = app
 
 
 class Task(Action):
@@ -88,10 +96,12 @@ class Task(Action):
     def add_step(self, step):
         self.steps.append(step)
 
+    @property
     def can_run(self):
         return False
 
     def commit(self):
+        trace(f"Task({self.name=}).commit(): {self.step.state=}")
         self.step.state = "committed"
         for child in self.steps:
             if child.step.state in ("run", "rerun"):
@@ -114,12 +124,13 @@ class Step(Action):
         self.commits_task = commits_task
         self.disable_prereqs = disable_prereqs
 
+    @property
     def can_run(self):
         return not self.disabled \
-           and (   not self.has_run()
+           and (   not self.has_run
                 or (not self.committed and self.can_rerun)
                 or (self.committed and self.can_rerun_after_commit)) \
-           and all(Actions[prereq].has_run() for prereq in self.prereqs)
+           and all(Actions[prereq].has_run for prereq in self.prereqs)
 
     def execute(self, app, *fn_args, **fn_kws):
         try:
@@ -129,9 +140,11 @@ class Step(Action):
             return None
 
     def mark_run(self, app):
+        trace(f"Step({self.name=}).mark_run(): {self.step.state=}")
+        assert self.step.state != "disabled", f'Step({self.name=}).mark_run: state is "disabled"'
         if self.step.state == "run":
             self.step.state = "rerun"
-        else:
+        elif self.step.state != 'rerun':
             self.step.state = "run"
         self.step.last_run = datetime.now()
         if self.commits_task:
@@ -139,6 +152,7 @@ class Step(Action):
         if self.disable_prereqs:
             for prereq in self.prereqs:
                 Actions[prereq].disable()
+        self.invalidate_dependents()
         return 'REFRESH'
 
 
@@ -153,6 +167,34 @@ class Steps(Row):
     primary_key = 'id'
 
     def reset(self):
+        trace(f"Steps({self.name=}).reset(): {self.state=}")
         self.state = "not-run"
         self.last_run = None
 
+    def disable(self):
+        trace(f"Steps({self.name=}).disable(): {self.state=}")
+        self.state = "disabled"
+
+    @property
+    def disabled(self):
+        return self.state == 'disabled'
+
+    @property
+    def committed(self):
+        return self.state == 'committed'
+
+    @property
+    def has_run(self):
+        return self.state is not None and self.state != "not-run"
+
+    def invalidate(self):
+        trace(f"Steps({self.id=}, {self.name=}).invalidate(): {self.state=}")
+        if self.has_run:
+            self.state = "not-run"
+            self.invalidate_dependents()
+
+    def invalidate_dependents(self):
+        trace(f"Steps({self.name=}).invalidate_dependents(): {self.state=}")
+        if self.id in Dependents:
+            for id in Dependents[self.id]:
+                Actions[id].invalidate()
