@@ -426,8 +426,8 @@ class Row(metaclass=Row_metaclass):
             case "Delete":
                 self.table.delete_row(self)
                 app.set_changed()
-                return None
-            case "Cancel":
+                return 'REFRESH'
+            case "Cancel":  # just closes the popup
                 return None
         if command not in self.row_popup_commands:
             trace(f"Row({self.table_name=}).execute: {command=} unknown")

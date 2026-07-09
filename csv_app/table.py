@@ -155,6 +155,7 @@ class Table_unique(Base_table, dict):
         self[key] = row
 
     def delete_row(self, row):
+        trace(f"{self.__class__.__name__}({self.name=}).delete_row({row.key()=})")
         del self[row.key()]
 
 class Table_by_date(Base_table, list):
@@ -217,6 +218,7 @@ class Table_by_date(Base_table, list):
             row.check_foreign_keys(Tables, row.date, raise_exc=True)
 
     def delete_row(self, row):
+        trace(f"{self.__class__.__name__}({self.name=}).delete_row({row.row_num=})")
         del self[row.row_num]
 
     def values(self):
