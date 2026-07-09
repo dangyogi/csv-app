@@ -166,6 +166,8 @@ class Steps(Row):
     )
     primary_key = 'id'
 
+    table_popup_commands_end = ()
+
     def reset(self):
         trace(f"Steps({self.name=}).reset(): {self.state=}")
         self.state = "not-run"

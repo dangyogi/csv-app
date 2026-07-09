@@ -4,6 +4,7 @@ import os
 import os.path
 import csv
 
+from tui_app.row_screen import row_screen
 from .row import *
 
 
@@ -27,7 +28,8 @@ class Base_table:
 
     @property
     def screen_popup_commands(self):
-        return [table.name for table in Tables.values() if not table.row_class.omit] + ['Save']
+        return tuple(table.name for table in Tables.values() if not table.row_class.omit) \
+             + self.row_class.table_popup_commands_end
 
     @property
     def columns(self):
@@ -43,10 +45,16 @@ class Base_table:
 
     def execute(self, app, command):
         trace(f"{self.name=}.execute({command=})")
-        if command == 'Save':
-           trace(f"{self.name=}.execute('Save'): not yet implemented")
-           app.set_changed()
-        raise ValueError(f"{self.name=}.execute: {command=} unknown")
+        match command:
+            case 'Save':
+                trace(f"{self.name=}.execute('Save'): not yet implemented")
+                app.reset_changed()
+                return 'REFRESH'
+            case 'Create':
+                app.set_changed()
+                return row_screen.for_create(self, app.screen)
+            case _:
+                raise ValueError(f"{self.name=}.execute: {command=} unknown")
 
     def check_foreign_keys(self):
         r'''Returns the number of errors found.

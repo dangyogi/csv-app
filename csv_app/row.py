@@ -2,6 +2,7 @@
 
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, timedelta
+from copy import copy
 
 from tui_app.row_screen import row_screen
 from .trace import trace
@@ -35,7 +36,7 @@ class Column:
     alignment = 'left'
 
     def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False, 
-                 parse=None, default=None, choices=None, min_width=None, can_edit=None):
+                 parse=None, default=None, choices=None, min_width=None, edit_width=None, can_edit=None):
         self.name = name
         self.abbr = abbr or name  # for column names in reports
         self.hidden = hidden
@@ -60,6 +61,7 @@ class Column:
         else:
             self.choices = frozenset(choices)
         self.min_width = min_width
+        self.edit_width = edit_width
         self.can_edit = can_edit
 
     def validate(self, s):
@@ -115,6 +117,8 @@ class Custom_column(Column):
         super().__init__(name, abbr, hidden, required, calculated)
 
 class Date_column(Custom_column):
+    edit_width = len("Nov 11, 26")
+
     def parse(self, s):
        #if isinstance(s, date):
        #    return s
@@ -128,6 +132,8 @@ class Date_column(Custom_column):
         return date_value.strftime(Date_format)
 
 class Datetime_column(Custom_column):
+    edit_width = len("01:14pm, Nov 03, 26")
+
     def parse(self, s):
         try:
             return datetime.fromisoformat(s)
@@ -150,6 +156,8 @@ class Set_column(Custom_column):
         return ','.join(sorted(set_value))
 
 class Bool_column(Custom_column):
+    edit_width = len("False")
+
     alignment = 'right'
 
     def parse(self, s):
@@ -232,30 +240,40 @@ class Row(metaclass=Row_metaclass):
     foreign_keys = ()
     in_database = True
     omit = False                                 # used by tui-app to omit from menu of tables
+
+    table_popup_commands_end = 'Create',
     row_popup_commands_start = 'View/Edit',
     row_popup_command_fns = ()                   # names of methods to execute the commands.
                                                  # these methods take a single (tui) app parameter
-    row_popup_commands_end = 'Delete', 'Cancel'
+    row_popup_commands_end = 'Cancel',
     row_screen_commands = ()
 
-    def __init__(self, **attrs):
+    def __init__(self, create=False, **attrs):
         r'''Not called by user app directly.  Use table.insert instead.
         '''
+        super().__setattr__("create", create)
         attrs_in = frozenset(name.strip() for name in attrs.keys())
         unknown_attrs = attrs_in.difference(self.stored_names)
         assert not unknown_attrs, f"{self.table_name}.__init__: unknown attrs={sorted(unknown_attrs)}"
-        missing_attrs = self.required.difference(attrs_in)
-        assert not missing_attrs, f"{self.table_name}.__init__: missing attrs={sorted(missing_attrs)}"
+        if not create:
+            self.check_required(attrs_in)
         for name, value in attrs.items():
             if value is None:
                 raise ValueError(f"{self.table_name}.__init__, column {name}: "
                                  "None is illegal value for any row attribute, omit from attrs instead")
             super().__setattr__(name, value)
 
+    def copy(self):
+        return copy(self)
+
+    def check_required(self, attrs_in):
+        missing_attrs = self.required.difference(attrs_in)
+        assert not missing_attrs, f"{self.table_name}.check_required: missing attrs={sorted(missing_attrs)}"
+
     def __setattr__(self, name, value):
         assert name in self.stored_names, \
                f"{self.table_name}.__setattr__({name=}, {value=}): unknown column"
-        assert self.column_map[name].can_edit, \
+        assert self.create and not self.column_map[name].calculated or self.column_map[name].can_edit, \
                f"{self.table_name}.__setattr__({name=}, {value=}): can not set non-editable column"
         if value is None:
             if name in self.__dict__:
@@ -404,7 +422,7 @@ class Row(metaclass=Row_metaclass):
         trace(f"Row({self.table_name=}).execute({command=})")
         match command:
             case "View/Edit":
-                return row_screen(self, app.screen)
+                return row_screen.for_update(self, app.screen)
             case "Delete":
                 self.table.delete_row(self)
                 app.set_changed()
