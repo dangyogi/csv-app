@@ -166,7 +166,7 @@ class Steps(Row):
     )
     primary_key = 'id'
 
-    table_popup_commands_end = ()
+    table_popup_commands_end = 'Print',
 
     def reset(self):
         trace(f"Steps({self.name=}).reset(): {self.state=}")

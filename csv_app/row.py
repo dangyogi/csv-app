@@ -241,7 +241,7 @@ class Row(metaclass=Row_metaclass):
     in_database = True
     omit = False                                 # used by tui-app to omit from menu of tables
 
-    table_popup_commands_end = 'Create',
+    table_popup_commands_end = 'Create', 'Print'
     row_popup_commands_start = 'View/Edit',
     row_popup_command_fns = ()                   # names of methods to execute the commands.
                                                  # these methods take a single (tui) app parameter

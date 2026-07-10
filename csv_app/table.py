@@ -6,6 +6,7 @@ import csv
 
 from tui_app.row_screen import row_screen
 from .row import *
+from .report import dump_table
 
 
 def set_database_filename(database_filename):
@@ -46,6 +47,9 @@ class Base_table:
     def execute(self, app, command):
         trace(f"{self.name=}.execute({command=})")
         match command:
+            case 'Print':
+                dump_table(self.name, pdf=True, load=False)
+                return None
             case 'Save':
                 trace(f"{self.name=}.execute('Save'): not yet implemented")
                 app.reset_changed()
