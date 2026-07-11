@@ -128,7 +128,7 @@ def test_init_unknown(Test_row):
 def test_init_missing(Test_row):
     with pytest.raises(AssertionError) as exc:
         Test_row(no_default="bb")
-    assert str(exc.value) == "Test_row.__init__: missing attrs=['req1', 'req2']"
+    assert str(exc.value) == "Test_row.check_required: missing attrs=['req1', 'req2']"
 
 
 @pytest.fixture

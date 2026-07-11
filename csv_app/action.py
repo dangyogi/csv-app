@@ -132,11 +132,11 @@ class Step(Action):
                 or (self.committed and self.can_rerun_after_commit)) \
            and all(Actions[prereq].has_run for prereq in self.prereqs)
 
-    def execute(self, app, *fn_args, **fn_kws):
+    def execute(self, screen, *fn_args, **fn_kws):
         try:
-            return self.fn(self, app, *fn_args, **fn_kws)
+            return self.fn(self, screen.app, *fn_args, **fn_kws)
         except ActionFailed as e:
-            app.screen.show_error(str(e))
+            screen.show_error(str(e))
             return None
 
     def mark_run(self, app):
@@ -153,6 +153,7 @@ class Step(Action):
             for prereq in self.prereqs:
                 Actions[prereq].disable()
         self.invalidate_dependents()
+        app.set_changed()
         return 'REFRESH'
 
 

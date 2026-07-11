@@ -44,21 +44,20 @@ class Base_table:
        #trace(f"{self.name}({self.name=}).get_rows")
         return [row for row in self.values() if row.selected(app, **select)]
 
-    def execute(self, app, command):
+    def execute(self, screen, command):
         trace(f"{self.name=}.execute({command=})")
         match command:
             case 'Print':
                 dump_table(self.name, pdf=True, load=False)
+                trace(f"{self.name=}.execute -> None")
                 return None
-            case 'Save':
-                trace(f"{self.name=}.execute('Save'): not yet implemented")
-                app.reset_changed()
-                return 'REFRESH'
             case 'Create':
-                app.set_changed()
-                return row_screen.for_create(self, app.screen)
+                screen.app.set_changed()
+                ans = row_screen.for_create(self, screen)
+                trace(f"{self.name=}.execute -> {ans}")
             case _:
-                raise ValueError(f"{self.name=}.execute: {command=} unknown")
+                trace(f"{self.name=}.execute -> 'Continue'")
+                return 'Continue'
 
     def check_foreign_keys(self):
         r'''Returns the number of errors found.
@@ -260,8 +259,8 @@ def load_rows(rows, *custom_tables):
     Database.load()
 
 
-__all__ = "Decimal date datetime timedelta abbr_month trace Tables Database load_rows " \
-          "Table_unique Table_by_date " \
+__all__ = "Decimal date datetime timedelta abbr_month Date_format Datetime_format trace " \
+          "Tables Database load_rows Table_unique Table_by_date " \
           "load_database save_database load_csv load_all clear_all check_foreign_keys " \
           "CSV_dialect CSV_format set_database_filename run".split()
 

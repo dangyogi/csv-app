@@ -416,23 +416,23 @@ class Row(metaclass=Row_metaclass):
             return ', '.join(self.get(key) for key in self.primary_keys)
         return str(self.row_num)
 
-    def execute(self, app, command):
-        r'''Run from row popup on table screen.
+    def execute(self, screen, command):
+        r'''Run from row popup_menu on table screen.
         '''
         trace(f"Row({self.table_name=}).execute({command=})")
         match command:
             case "View/Edit":
-                return row_screen.for_update(self, app.screen)
+                return row_screen.for_update(self, screen)
             case "Delete":
                 self.table.delete_row(self)
-                app.set_changed()
+                screen.app.set_changed()
                 return 'REFRESH'
             case "Cancel":  # just closes the popup
                 return None
         if command not in self.row_popup_commands:
             trace(f"Row({self.table_name=}).execute: {command=} unknown")
             raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
-        return getattr(self, command)(app)
+        return getattr(self, command)(screen)
 
     def dump(self):
         r'''Appends attr values onto end of current print line.
