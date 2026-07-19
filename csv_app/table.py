@@ -55,6 +55,7 @@ class Base_table:
                 screen.app.set_changed()
                 ans = row_screen.for_create(self, screen)
                 trace(f"{self.name=}.execute -> {ans}")
+                return ans
             case _:
                 trace(f"{self.name=}.execute -> 'Continue'")
                 return 'Continue'
