@@ -268,7 +268,9 @@ class Row(metaclass=Row_metaclass):
 
     def check_required(self, attrs_in):
         missing_attrs = self.required.difference(attrs_in)
-        assert not missing_attrs, f"{self.table_name}.check_required: missing attrs={sorted(missing_attrs)}"
+        if missing_attrs:
+            # ValueError (not assert) so the create/update path can catch it and show a message
+            raise ValueError(f"{self.table_name}.check_required: missing attrs={sorted(missing_attrs)}")
 
     def __setattr__(self, name, value):
         assert name in self.stored_names, \
@@ -369,7 +371,8 @@ class Row(metaclass=Row_metaclass):
                 error_msg = f"{self.table_name}.check_foreign_keys({row_id=}): " \
                             f"{key=} not in {table_name}"
                 if raise_exc:
-                    raise KeyError(error_msg)
+                    # ValueError (not KeyError) so the create path can catch it and show a message
+                    raise ValueError(error_msg)
                 else:
                     print(error_msg)
                 ans = False

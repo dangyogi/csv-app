@@ -51,9 +51,9 @@ def test_table_unique_duplicate_error():
     table = Tables["UserRow"]
     
     table.insert(user_id="101", username="bruce")
-    
-    with pytest.raises(AssertionError):
-        # Should crash because '101' already exists
+
+    with pytest.raises(ValueError):
+        # duplicate key -> ValueError (so the create path can catch it and show a message)
         table.insert(user_id="101", username="clark")
 
 

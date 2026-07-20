@@ -155,7 +155,9 @@ class Table_unique(Base_table, dict):
         key = row.key()
         if not skip_fk_check:
             row.check_foreign_keys(Tables, key, raise_exc=True)
-        assert key not in self, f"{self.name}.insert: Duplicate {key=}"
+        if key in self:
+            # ValueError (not assert) so the create path can catch it and show a message
+            raise ValueError(f"{self.name}: duplicate key {key!r}")
         self[key] = row
 
     def delete_row(self, row):

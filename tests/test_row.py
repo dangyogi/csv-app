@@ -126,7 +126,7 @@ def test_init_unknown(Test_row):
 
 
 def test_init_missing(Test_row):
-    with pytest.raises(AssertionError) as exc:
+    with pytest.raises(ValueError) as exc:      # check_required now raises ValueError (catchable)
         Test_row(no_default="bb")
     assert str(exc.value) == "Test_row.check_required: missing attrs=['req1', 'req2']"
 
@@ -235,7 +235,8 @@ def test_check_foreign_keys_error(tables, row_with_fks, key_to_change):
 def test_check_foreign_keys_exc(tables, row_with_fks, key_to_change):
     test_row = row_with_fks(key="value", key1="value1", key2="value2")
     setattr(test_row, key_to_change, "bogus")
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
+        # bad FK -> ValueError (so the create path can catch it and show a message)
         assert not test_row.check_foreign_keys(tables, "row_id", raise_exc=True)
 
 
@@ -264,5 +265,6 @@ def test_from_csv(Test_row, header, row):
     (("req1", "with_default"), ("r1", "wd")),
 ])
 def test_from_csv_error(Test_row, header, row):
-    with pytest.raises(AssertionError):
+    # bad CSV -> unknown-attr cases still assert; missing-required cases now raise ValueError
+    with pytest.raises((AssertionError, ValueError)):
         Test_row.from_csv(header, row)
