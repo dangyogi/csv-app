@@ -113,8 +113,9 @@ class Column:
         return ans
 
 class Custom_column(Column):
-    def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False):
-        super().__init__(name, abbr, hidden, required, calculated)
+    def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False, default=None,
+                 can_edit=None):
+        super().__init__(name, abbr, hidden, required, calculated, default=default, can_edit=can_edit)
 
 class Date_column(Custom_column):
     edit_width = len("Nov 11, 26")
