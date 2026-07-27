@@ -32,11 +32,17 @@ Datetime_format = "%I:%M%P, %b %d, %y"  # 01:14pm, Nov 03, 26
 
 class Column:
     r'''Handles reading in, validating, and writing out the cell values for one column.
+    
+    choices is a list/tuple of available choices.  Field may only be set to one of these values.
+
+    selection_fn() produces a list to choose from.  The field is not restricted to these values;
+    generally because the field is a foreign_key, which will restrict its values.
     '''
     alignment = 'left'
 
     def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False, 
-                 parse=None, default=None, choices=None, min_width=None, edit_width=None, can_edit=None):
+                 parse=None, default=None, choices=None, selection_fn=None,
+                 min_width=None, edit_width=None, can_edit=None):
         self.name = name
         self.abbr = abbr or name  # for column names in reports
         self.hidden = hidden
@@ -56,10 +62,13 @@ class Column:
         self.required = required
         if default is not None:
             self.default = default
-        if choices is None:
-            self.choices = None
+        self.choices = choices
+        if selection_fn is not None:
+            self.selection_fn = selection_fn
+        elif choices is not None:
+            self.selection_fn = lambda: choices
         else:
-            self.choices = frozenset(choices)
+            self.selection_fn = None
         self.min_width = min_width
         self.edit_width = edit_width
         self.can_edit = can_edit
@@ -91,7 +100,7 @@ class Column:
     def parse(self, s):
         r'''Default parse.
         '''
-        if self.choices and s not in self.choices:
+        if self.choices is not None and s not in self.choices:
             raise ValueError(f"{self.name}: {s!r} not in {self.choices}")
         return s
 
@@ -108,7 +117,7 @@ class Column:
         r'''Used by to_csv().
         '''
         ans = str(value)
-        if self.choices and ans not in self.choices:
+        if self.choices is not None and ans not in self.choices:
             raise ValueError(f"{self.name}.to_csv: {ans!r} not in {self.choices}")
         return ans
 

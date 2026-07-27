@@ -126,7 +126,7 @@ class Base_table:
             widths[name] = max_width
             header_row.append(align(name, max_width, alignment))
         print('|'.join(header_row), file=file)
-        for row in self.values():
+        for row in self.to_csv_rows():
             values = []
             for name in headers:
                 value = row.csv_value(name)
@@ -150,6 +150,9 @@ class Table_unique(Base_table, dict):
     def __init__(self, row_class):
         Base_table.__init__(self, row_class)
         dict.__init__(self)
+
+    def to_csv_rows(self):
+        return sorted(self.values(), key=attrgetter("key"))
 
     def add_row(self, row, skip_fk_check=False):
         key = row.key()
@@ -215,6 +218,9 @@ class Table_by_date(Base_table, list):
                 first = i + 1
         # first == last
         return first
+
+    def to_csv_rows(self):
+        return self
 
     def add_row(self, row, skip_fk_check=False):
         i = self.last_date(row.date)
