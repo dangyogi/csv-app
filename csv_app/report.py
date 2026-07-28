@@ -84,7 +84,7 @@ __all__ = "set_canvas get_pagesize set_landscape canvas_showPage canvas_save Rep
 
 
 Canvas = None
-Pagesize = None
+Pagesize = None     # width, height
 Page_width = None
 Page_height = None
 
@@ -101,6 +101,8 @@ def set_canvas(filename, path=Path("~/Documents/"), landscape=False):
     Canvas = canvas.Canvas(str(path), pagesize=Pagesize)
 
 def get_pagesize():
+    r'''width, height
+    '''
     return Pagesize
 
 def set_landscape():

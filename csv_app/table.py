@@ -3,11 +3,16 @@
 import os
 import os.path
 import csv
+from operator import methodcaller
+import logging
 
 from tui_app.row_screen import row_screen
 from .row import *
 from .report import dump_table
 
+
+logger = logging.getLogger('csv-app.table')
+logger_execute = logging.getLogger('tui-app.execute')
 
 def set_database_filename(database_filename):
     global Database_filename
@@ -41,23 +46,23 @@ class Base_table:
         return self.row_class.table_name
 
     def get_rows(self, app, **select):
-       #trace(f"{self.name}({self.name=}).get_rows")
+       #logger.info(f"{self.name}({self.name=}).get_rows")
         return [row for row in self.values() if row.selected(app, **select)]
 
     def execute(self, screen, command):
-        trace(f"{self.name=}.execute({command=})")
+        logger_execute.info(f"{self.name=}.execute({command=})")
         match command:
             case 'Print':
                 dump_table(self.name, pdf=True, load=False)
-                trace(f"{self.name=}.execute -> None")
+                logger_execute.info(f"{self.name=}.execute -> None")
                 return None
             case 'Create':
                 screen.app.set_changed()
                 ans = row_screen.for_create(self, screen)
-                trace(f"{self.name=}.execute -> {ans}")
+                logger_execute.info(f"{self.name=}.execute -> {ans}")
                 return ans
             case _:
-                trace(f"{self.name=}.execute -> 'Continue'")
+                logger_execute.info(f"{self.name=}.execute: unknown -> 'Continue'")
                 return 'Continue'
 
     def check_foreign_keys(self):
@@ -152,7 +157,7 @@ class Table_unique(Base_table, dict):
         dict.__init__(self)
 
     def to_csv_rows(self):
-        return sorted(self.values(), key=attrgetter("key"))
+        return sorted(self.values(), key=methodcaller("key"))
 
     def add_row(self, row, skip_fk_check=False):
         key = row.key()
@@ -164,7 +169,7 @@ class Table_unique(Base_table, dict):
         self[key] = row
 
     def delete_row(self, row):
-        trace(f"{self.__class__.__name__}({self.name=}).delete_row({row.key()=})")
+        logger.info(f"{self.__class__.__name__}({self.name=}).delete_row({row.key()=})")
         del self[row.key()]
 
 class Table_by_date(Base_table, list):
@@ -230,7 +235,7 @@ class Table_by_date(Base_table, list):
             row.check_foreign_keys(Tables, row.date, raise_exc=True)
 
     def delete_row(self, row):
-        trace(f"{self.__class__.__name__}({self.name=}).delete_row({row.row_num=})")
+        logger.info(f"{self.__class__.__name__}({self.name=}).delete_row({row.row_num=})")
         del self[row.row_num]
 
     def values(self):
@@ -242,7 +247,7 @@ class Table_by_date(Base_table, list):
             if row.selected(app, **select):
                 row.set_row_num(row_num)
                 ans.append(row)
-       #trace(f"Table_by_date({self.name=}).get_rows: {ans[0].row_num=}")
+       #logger.info(f"Table_by_date({self.name=}).get_rows: {ans[0].row_num=}")
         return ans
 
 Tables = {}
@@ -268,7 +273,7 @@ def load_rows(rows, *custom_tables):
     Database.load()
 
 
-__all__ = "Decimal date datetime timedelta abbr_month Date_format Datetime_format trace " \
+__all__ = "Decimal date datetime timedelta abbr_month Date_format Datetime_format " \
           "Tables Database load_rows Table_unique Table_by_date " \
           "load_database save_database load_csv load_all clear_all check_foreign_keys " \
           "CSV_dialect CSV_format set_database_filename run".split()

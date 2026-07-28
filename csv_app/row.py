@@ -3,9 +3,9 @@
 from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, timedelta
 from copy import copy
+import logging
 
 from tui_app.row_screen import row_screen
-from .trace import trace
 
 
 # date.weekday numbers:
@@ -29,6 +29,8 @@ def abbr_month(m):
 Date_format = "%b %d, %y"               # Nov 03, 26
 Datetime_format = "%I:%M%P, %b %d, %y"  # 01:14pm, Nov 03, 26
 
+logger = logging.getLogger('csv-app.row')
+logger_execute = logging.getLogger('tui-app.execute')
 
 class Column:
     r'''Handles reading in, validating, and writing out the cell values for one column.
@@ -432,20 +434,28 @@ class Row(metaclass=Row_metaclass):
     def execute(self, screen, command):
         r'''Run from row popup_menu on table screen.
         '''
-        trace(f"Row({self.table_name=}).execute({command=})")
+        logger_execute.info(f"Row({self.table_name=}).execute({command=})")
         match command:
             case "View/Edit":
-                return row_screen.for_update(self, screen)
+                logger_execute.info(f"calling row_screen.for_update")
+                ans = row_screen.for_update(self, screen)
+                logger_execute.info(f"calling row_screen.for_update -> returning {ans}")
+                return ans
             case "Delete":
                 self.table.delete_row(self)
                 screen.app.set_changed()
+                logger_execute.info(f"called self.table.delete_row -> returning 'REFRESH'")
                 return 'REFRESH'
             case "Cancel":  # just closes the popup
+                logger_execute.info(f"just close the popup -> returning None")
                 return None
         if command not in self.row_popup_commands:
-            trace(f"Row({self.table_name=}).execute: {command=} unknown")
+            logger_execute.info(f"Row({self.table_name=}).execute: {command=} unknown")
             raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
-        return getattr(self, command)(screen)
+        logger_execute.info(f"calling self.{command}")
+        ans = getattr(self, command)(screen)
+        logger_execute.info(f"self.{command} -> returning {ans}")
+        return ans
 
     def dump(self):
         r'''Appends attr values onto end of current print line.
@@ -460,7 +470,7 @@ class Row(metaclass=Row_metaclass):
 
 
 __all__ = "MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY " \
-          "date datetime timedelta abbr_month Date_format Datetime_format trace " \
+          "date datetime timedelta abbr_month Date_format Datetime_format " \
           "Decimal Column Date_column Datetime_column Set_column Bool_column Row create_database_py".split()
 
 

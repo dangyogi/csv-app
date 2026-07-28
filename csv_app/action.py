@@ -1,6 +1,7 @@
 # action.py
 
 from collections import defaultdict
+import logging
 
 from .row import *
 from .table import Database
@@ -11,7 +12,6 @@ __all__ = "reset ActionFailed Task Step Steps".split()
 
 Actions = {}                    # {id: action}
 Dependents = defaultdict(set)   # {prereq: {dependants}}
-
 
 class ActionFailed(Exception):
     pass
@@ -24,9 +24,12 @@ def register(action):
 
 def reset():
     r'''Run when a new month is created to start all over again...
+
+    Return 'REFRESH'.
     '''
     for action in Actions.values():
         action.reset()
+    return 'REFRESH'
 
 
 class Action:
@@ -56,15 +59,15 @@ class Action:
         return self.step.has_run
 
     def invalidate(self):
-        trace(f"{self.__class__.__name__}({self.name=}).invalidate()")
+        self.logger.info(f"{self.__class__.__name__}({self.name=}).invalidate()")
         self.step.invalidate()
 
     def invalidate_dependents(self):
-        trace(f"{self.__class__.__name__}({self.name=}).invalidate_dependents()")
+        self.logger.info(f"{self.__class__.__name__}({self.name=}).invalidate_dependents()")
         self.step.invalidate_dependents()
 
     def disable(self):
-        trace(f"{self.__class__.__name__}({self.name=}).disable()")
+        self.logger.info(f"{self.__class__.__name__}({self.name=}).disable()")
         self.step.disable()
 
     @property
@@ -72,7 +75,7 @@ class Action:
         return self.step.disabled
 
     def reset(self):
-        trace(f"{self.__class__.__name__}({self.name=}).reset()")
+        self.logger.info(f"{self.__class__.__name__}({self.name=}).reset()")
         self.step.reset()
 
     @property
@@ -87,6 +90,7 @@ class Task(Action):
     r'''Made up of several Steps.
     '''
     is_task = True
+    logger = logging.getLogger('csv-app.action.Task')
 
     def __init__(self, id, *prereqs, column_break=False, can_rerun_after_commit=False):
         super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit)
@@ -101,7 +105,7 @@ class Task(Action):
         return False
 
     def commit(self):
-        trace(f"Task({self.name=}).commit(): {self.step.state=}")
+        self.logger.info(f"Task({self.name=}).commit(): {self.step.state=}")
         self.step.state = "committed"
         for child in self.steps:
             if child.step.state in ("run", "rerun"):
@@ -112,10 +116,12 @@ class Step(Action):
     r'''A single function.
     '''
     is_task = False
+    logger = logging.getLogger('csv-app.action.Step')
 
-    def __init__(self, id, task, fn, *prereqs, can_rerun=False, can_rerun_after_commit=False, commits_task=False,
-                 disable_prereqs=False):
+    def __init__(self, id, task, fn, *prereqs, ok_fn=None, can_rerun=False, can_rerun_after_commit=False,
+                 commits_task=False, disable_prereqs=False):
         super().__init__(id, *prereqs, can_rerun_after_commit=can_rerun_after_commit)
+        self.ok_fn = ok_fn
         self.task = task
         if task is not None:
             task.add_step(self)
@@ -130,7 +136,8 @@ class Step(Action):
            and (   not self.has_run
                 or (not self.committed and self.can_rerun)
                 or (self.committed and self.can_rerun_after_commit)) \
-           and all(Actions[prereq].has_run for prereq in self.prereqs)
+           and all(Actions[prereq].has_run for prereq in self.prereqs) \
+           and (self.ok_fn is None or self.ok_fn())
 
     def execute(self, screen, *fn_args, **fn_kws):
         try:
@@ -140,7 +147,7 @@ class Step(Action):
             return None
 
     def mark_run(self, app):
-        trace(f"Step({self.name=}).mark_run(): {self.step.state=}")
+        self.logger.info(f"Step({self.name=}).mark_run(): {self.step.state=}")
         assert self.step.state != "disabled", f'Step({self.name=}).mark_run: state is "disabled"'
         if self.step.state == "run":
             self.step.state = "rerun"
@@ -158,6 +165,7 @@ class Step(Action):
 
 
 class Steps(Row):
+    logger = logging.getLogger('csv-app.action.Steps')
     columns = (
         Column("id", parse=int, required=True),   # same as Action
         Column("number", required=True),
@@ -170,12 +178,11 @@ class Steps(Row):
     table_popup_commands_end = 'Print',
 
     def reset(self):
-        trace(f"Steps({self.name=}).reset(): {self.state=}")
+        self.logger.info(f"Steps({self.name=}).reset(): {self.state=}")
         self.state = "not-run"
-        self.last_run = None
 
     def disable(self):
-        trace(f"Steps({self.name=}).disable(): {self.state=}")
+        self.logger.info(f"Steps({self.name=}).disable(): {self.state=}")
         self.state = "disabled"
 
     @property
@@ -191,13 +198,13 @@ class Steps(Row):
         return self.state is not None and self.state != "not-run"
 
     def invalidate(self):
-        trace(f"Steps({self.id=}, {self.name=}).invalidate(): {self.state=}")
+        self.logger.info(f"Steps({self.id=}, {self.name=}).invalidate(): {self.state=}")
         if self.has_run:
             self.state = "not-run"
             self.invalidate_dependents()
 
     def invalidate_dependents(self):
-        trace(f"Steps({self.name=}).invalidate_dependents(): {self.state=}")
+        self.logger.info(f"Steps({self.name=}).invalidate_dependents(): {self.state=}")
         if self.id in Dependents:
             for id in Dependents[self.id]:
                 Actions[id].invalidate()
