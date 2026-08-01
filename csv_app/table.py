@@ -74,12 +74,12 @@ class Base_table:
                 errors += 1
         return errors
 
-    def insert(self, **attrs):
+    def insert(self, skip_fk_check=False, **attrs):
         r'''Attributes may not be set to None.  Instead omit the attribute from `attrs`.
 
         The values in attrs are python values (not just strings).
         '''
-        self.add_row(self.row_class(**attrs))
+        self.add_row(self.row_class(**attrs), skip_fk_check=skip_fk_check)
 
     def insert_from_csv(self, header, row, ignore_unknown_cols=False, skip_fk_check=False):
        #print(f"{self.name}.insert_from_csv({header=}, {row=})")
@@ -157,7 +157,9 @@ class Table_unique(Base_table, dict):
         dict.__init__(self)
 
     def to_csv_rows(self):
-        return sorted(self.values(), key=methodcaller("key"))
+        if self.row_class.sort:
+            return sorted(self.values(), key=methodcaller("key"))
+        return self.values()
 
     def add_row(self, row, skip_fk_check=False):
         key = row.key()
