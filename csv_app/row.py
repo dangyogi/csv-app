@@ -249,7 +249,6 @@ class Row(metaclass=Row_metaclass):
     '''
     primary_key = None
     primary_keys = None
-    sort = True
     foreign_keys = ()
     in_database = True
     omit = False                                 # used by tui-app to omit from menu of tables

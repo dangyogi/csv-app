@@ -157,9 +157,7 @@ class Table_unique(Base_table, dict):
         dict.__init__(self)
 
     def to_csv_rows(self):
-        if self.row_class.sort:
-            return sorted(self.values(), key=methodcaller("key"))
-        return self.values()
+        return sorted(self.values(), key=methodcaller("key"))
 
     def add_row(self, row, skip_fk_check=False):
         key = row.key()
