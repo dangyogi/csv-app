@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csv-app"
-version = "0.0.1"
+version = "0.0.2"
 description = "Library for using CSV files as a simple database"
 readme = "README.md"
 license = "MIT"
