@@ -7,7 +7,7 @@ from .row import *
 from .table import Database
 
 
-__all__ = "reset ActionFailed Task Step Steps".split()
+__all__ = "reset ActionFailed Task Note Step Steps".split()
 
 
 Actions = {}                    # {id: action}
@@ -35,6 +35,8 @@ def reset():
 class Action:
     column_break = False
     task = None
+    is_task = False
+    is_note = False
 
     def __init__(self, id, *prereqs, can_rerun_after_commit=False):
         self.id = id
@@ -112,10 +114,22 @@ class Task(Action):
                 child.step.state = "committed"
 
 
+class Note(Action):
+    r'''A single line of text that doesn't do anything.
+    '''
+    is_note = True
+
+    def __init__(self, id, task):
+        super().__init__(id)
+        self.task = task
+
+    def can_run(self):
+        return False
+
+
 class Step(Action):
     r'''A single function.
     '''
-    is_task = False
     logger = logging.getLogger('csv-app.action.Step')
 
     def __init__(self, id, task, fn, *prereqs, ok_fn=None, can_rerun=False, can_rerun_after_commit=False,
