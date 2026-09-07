@@ -18,6 +18,9 @@ def set_database_filename(database_filename):
     global Database_filename
     Database_filename = database_filename
 
+def get_database_filename():
+    return Database_filename
+
 CSV_dialect = 'excel'  # 'excel', 'excel-tab' or 'unix'
 CSV_format = dict(delimiter='|', quoting=csv.QUOTE_NONE, skipinitialspace=True, strict=True)
 
@@ -278,7 +281,7 @@ def load_rows(rows, *custom_tables):
 __all__ = "Decimal date datetime timedelta abbr_month Date_format Datetime_format " \
           "Tables Database load_rows Table_unique Table_by_date " \
           "load_database save_database load_csv load_all clear_all check_foreign_keys " \
-          "CSV_dialect CSV_format set_database_filename run".split()
+          "CSV_dialect CSV_format set_database_filename get_database_filename run".split()
 
 
 def load_database(csv_filename=None, ignore_unknown_cols=False):
