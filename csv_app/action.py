@@ -3,6 +3,7 @@
 from collections import defaultdict
 import logging
 
+from tui_app.tui import get_app
 from .row import *
 from .table import Database
 
@@ -153,11 +154,12 @@ class Step(Action):
            and all(Actions[prereq].has_run for prereq in self.prereqs) \
            and (self.ok_fn is None or self.ok_fn())
 
-    def execute(self, screen, *fn_args, **fn_kws):
+    def execute_fn(self, *fn_args, **fn_kws):
+        app = get_app()
         try:
-            return self.fn(self, screen.app, *fn_args, **fn_kws)
+            return self.fn(self, app, *fn_args, **fn_kws)
         except ActionFailed as e:
-            screen.show_error(str(e))
+            app.screen.show_error(str(e))
             return None
 
     def mark_run(self, app):

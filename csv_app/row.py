@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from copy import copy
 import logging
 
+from tui_app.tui import get_app
 from tui_app.row_screen import row_screen
 
 
@@ -432,19 +433,19 @@ class Row(metaclass=Row_metaclass):
             return ', '.join(self.get(key) for key in self.primary_keys)
         return str(self.row_num)
 
-    def execute(self, screen, command):
+    def execute(self, command):
         r'''Run from row popup_menu on table screen.
         '''
         logger_execute.info(f"Row({self.table_name=}).execute({command=})")
         match command:
             case "View/Edit":
                 logger_execute.info(f"calling row_screen.for_update")
-                ans = row_screen.for_update(self, screen)
+                ans = row_screen.for_update(self, get_app().screen)
                 logger_execute.info(f"calling row_screen.for_update -> returning {ans}")
                 return ans
             case "Delete":
                 self.table.delete_row(self)
-                screen.app.set_changed()
+                get_app().set_changed()
                 logger_execute.info(f"called self.table.delete_row -> returning 'REFRESH'")
                 return 'REFRESH'
             case "Cancel":  # just closes the popup
@@ -454,7 +455,7 @@ class Row(metaclass=Row_metaclass):
             logger_execute.info(f"Row({self.table_name=}).execute: {command=} unknown")
             raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
         logger_execute.info(f"calling self.{command}")
-        ans = getattr(self, command)(screen)
+        ans = getattr(self, command)(get_app().screen)
         logger_execute.info(f"self.{command} -> returning {ans}")
         return ans
 

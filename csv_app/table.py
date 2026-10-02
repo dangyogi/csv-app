@@ -6,6 +6,7 @@ import csv
 from operator import methodcaller
 import logging
 
+from tui_app.tui import get_app
 from tui_app.row_screen import row_screen
 from .row import *
 from .report import dump_table
@@ -52,7 +53,7 @@ class Base_table:
        #logger.info(f"{self.name}({self.name=}).get_rows")
         return [row for row in self.values() if row.selected(app, **select)]
 
-    def execute(self, screen, command):
+    def execute(self, command):
         logger_execute.info(f"{self.name=}.execute({command=})")
         match command:
             case 'Print':
@@ -60,8 +61,9 @@ class Base_table:
                 logger_execute.info(f"{self.name=}.execute -> None")
                 return None
             case 'Create':
-                screen.app.set_changed()
-                ans = row_screen.for_create(self, screen)
+                app = get_app()
+                app.set_changed()
+                ans = row_screen.for_create(self, app.screen)
                 logger_execute.info(f"{self.name=}.execute -> {ans}")
                 return ans
             case _:
