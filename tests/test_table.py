@@ -3,7 +3,8 @@
 import pytest
 from datetime import date
 from csv_app.row import Row, Column, Date_column
-from csv_app.table import load_rows, Tables, Database, Table_unique, Table_by_date
+from csv_app.table import Tables, Table_unique, Table_by_date
+from csv_app.load_save import load_rows, Database
 
 
 # Define clear Mock Rows for testing table layout behaviors

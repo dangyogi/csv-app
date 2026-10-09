@@ -7,3 +7,4 @@
   - login: aed342001@smtp-brevo.com
 - signal-cli
 - twilio for SMS (roughly $0.01/msg)
+- create lock files for database files

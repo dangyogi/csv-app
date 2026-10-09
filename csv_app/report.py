@@ -673,7 +673,7 @@ def dump_table(table_name, pdf=False, load=True, default_fontsize=13):
     import database
 
     if load:
-        database.load_database()
+        database.load_database(exclusive=False)
 
     if table_name.endswith('.csv'):
         database.load_csv(table_name)  # replaces table in database with .csv file, but we don't save the database!

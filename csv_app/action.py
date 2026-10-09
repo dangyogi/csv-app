@@ -5,7 +5,7 @@ import logging
 
 from tui_app.tui import get_app
 from .row import *
-from .table import Database
+from .load_save import Database
 
 
 __all__ = "reset ActionFailed Task Note Step Steps".split()

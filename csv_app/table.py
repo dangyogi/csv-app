@@ -1,8 +1,5 @@
 # table.py
 
-import os
-import os.path
-import csv
 from operator import methodcaller
 import logging
 
@@ -14,16 +11,6 @@ from .report import dump_table
 
 logger = logging.getLogger('csv-app.table')
 logger_execute = logging.getLogger('tui-app.execute')
-
-def set_database_filename(database_filename):
-    global Database_filename
-    Database_filename = database_filename
-
-def get_database_filename():
-    return Database_filename
-
-CSV_dialect = 'excel'  # 'excel', 'excel-tab' or 'unix'
-CSV_format = dict(delimiter='|', quoting=csv.QUOTE_NONE, skipinitialspace=True, strict=True)
 
 
 def align(value, width, alignment):
@@ -259,93 +246,10 @@ class Table_by_date(Base_table, list):
 
 Tables = {}
 
-class DB:
-    def load(self):
-        for name, table in Tables.items():
-            setattr(self, name, table)
-
-Database = DB()
-
-def load_rows(rows, *custom_tables):
-    custom_map = {cls.__name__: cls for cls in custom_tables}
-    def table_for_row(row_class):
-        if row_class.table_name in custom_map:
-            return custom_map[row_class.table_name](row_class)
-        if row_class.primary_key is not None or row_class.primary_keys:
-            return Table_unique(row_class)
-        assert 'date' in row_class.required, f"{row_class.table_name} must have primary_key/s or date"
-        return Table_by_date(row_class)
-    for row_class in rows:
-        Tables[row_class.table_name] = table_for_row(row_class)
-    Database.load()
-
 
 __all__ = "Decimal date datetime timedelta abbr_month Date_format Datetime_format " \
-          "Tables Database load_rows Table_unique Table_by_date " \
-          "load_database save_database load_csv load_all clear_all check_foreign_keys " \
-          "CSV_dialect CSV_format set_database_filename get_database_filename run".split()
+          "Tables Table_unique Table_by_date check_foreign_keys run".split()
 
-
-def load_database(csv_filename=None, ignore_unknown_cols=False):
-    r'''Loads all database tables in csv_filename from scratch skipping fk_check.
-    '''
-    if csv_filename is None:
-        csv_filename = Database_filename
-    with open(csv_filename, 'r') as f:
-        reader = iter(csv.reader(f, CSV_dialect, **CSV_format))
-        while True:
-            try:
-                header = next(reader)
-                assert len(header) == 1, f"from_csv: Expected table name, got {header}"
-                Tables[header[0].strip()].from_csv(reader, ignore_unknown_cols=ignore_unknown_cols,
-                                                   skip_fk_check=True)
-            except StopIteration:
-                break
-
-def save_database(csv_filename=None):
-    if csv_filename is None:
-        csv_filename = Database_filename
-    temp_filename = csv_filename + '-new'
-    with open(temp_filename, 'w') as f:
-        for table in Tables.values():
-            if table.row_class.in_database:
-                table.to_csv(f, add_empty_row=True)
-    save_filename = csv_filename + '-save'
-    if os.path.exists(save_filename):
-        os.remove(save_filename)
-    os.link(csv_filename, save_filename)     # creates hard link: save_filename points to csv_filename
-    os.replace(temp_filename, csv_filename)  # renames temp_filename to csv_filename atomically,
-                                             # replacing csv_filename
-
-def load_csv(csv_filename, from_scratch=True, ignore_unknown_cols=False):
-    r'''Loads table from csv_filename.
-
-    clears current contents of table if from_scratch is True, otherwise, rows are appended.
-
-    If csv_filename has no .csv suffix, one is added.
-
-    Returns the number of rows inserted.
-    '''
-    if not csv_filename.endswith(".csv"):
-        csv_filename += ".csv"
-    with open(csv_filename, 'r') as f:
-        csv_reader = iter(csv.reader(f, CSV_dialect, **CSV_format))
-        row1 = next(csv_reader)
-        assert len(row1) == 1, f"load_csv: Expected table name, got {row1=}"
-        table_name = row1[0].strip()
-        return Tables[table_name].from_csv(csv_reader, from_scratch=from_scratch, ignore_unknown_cols=ignore_unknown_cols)
-
-def load_all(from_scratch=True, ignore_unknown_cols=False):
-    for table in Tables.values():
-        if os.path.exists(f"{table.name}.csv"):
-            print("loading:", table.name)
-            load_csv(table.name, from_scratch=from_scratch, ignore_unknown_cols=ignore_unknown_cols)
-        else:
-            print("load_all: skipping", table.name)
-
-def clear_all():
-    for table in reversed(Tables.values()):
-        table.clear()
 
 def check_foreign_keys():
     errors = 0
@@ -358,6 +262,7 @@ def check_foreign_keys():
 
 def run():
     import argparse
+    from .load_save import clear_all, load_database, load_all, load_csv, check_foreign_keys, save_database
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--init", "-i", action="store_true", default=False, help="init database to all empty tables")

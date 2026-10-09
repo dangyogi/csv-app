@@ -1,3 +1,7 @@
+# project
+dummy.csv*
+log_*.txt
+
 # My stuff
 .*.swp
 .pyhist
