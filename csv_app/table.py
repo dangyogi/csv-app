@@ -262,7 +262,7 @@ def check_foreign_keys():
 
 def run():
     import argparse
-    from .load_save import clear_all, load_database, load_all, load_csv, check_foreign_keys, save_database
+    from .load_save import clear_all, load_database, load_all, load_csv, save_database
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--init", "-i", action="store_true", default=False, help="init database to all empty tables")
