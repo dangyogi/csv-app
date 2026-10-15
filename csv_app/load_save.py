@@ -28,7 +28,9 @@ __all__ = [
 
 def set_database_filename(database_filename):
     global Database_filename
-    Database_filename = database_filename
+    tag = database_filename.lower()
+    if tag.endswith('.csv'): tag = tag[:-4]
+    Database_filename = os.getenv(tag.upper())
 
 def get_database_filename():
     return Database_filename
