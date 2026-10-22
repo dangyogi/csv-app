@@ -28,7 +28,7 @@ def abbr_month(m):
     return Months_abbreviated[m]
 
 Date_format = "%b %d, %y"               # Nov 03, 26
-Datetime_format = "%I:%M%P, %b %d, %y"  # 01:14pm, Nov 03, 26
+Datetime_format = "%I:%M%p, %b %d, %y"  # 01:14pm, Nov 03, 26
 
 logger = logging.getLogger('csv-app.row')
 logger_execute = logging.getLogger('tui-app.execute')

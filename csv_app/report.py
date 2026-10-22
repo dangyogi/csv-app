@@ -579,7 +579,7 @@ class Row_template(Value):
 
     These are used in 3 steps:
 
-        1. Create the Row_templates the define the structure of your document.
+        1. Create the Row_templates that define the structure of your document.
 
            Save the key rows in python variables for step 2.
 

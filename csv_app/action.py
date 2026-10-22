@@ -118,6 +118,7 @@ class Task(Action):
 class Note(Action):
     r'''A single line of text that doesn't do anything.
     '''
+    logger = logging.getLogger('csv-app.action.Note')
     is_note = True
 
     def __init__(self, id, task):
