@@ -84,3 +84,70 @@ def test_table_by_date_sorting():
     assert selected[1].message == "Middle log 2"
     assert selected[2].message == "Late log"
     assert selected[3].message == "Late log 2"
+
+
+class ItemRow(Row):
+    primary_key = "item"
+    columns = (
+        Column("item", required=True),
+    )
+
+class InventoryRow(Row):
+    foreign_keys = "ItemRow",
+    columns = (
+        Date_column("date", required=True),
+        Column("item", required=True),
+    )
+
+
+def _three_logs():
+    load_rows([LogRow])
+    table = Tables["LogRow"]
+    table.insert(date=date(2026, 1, 1), message="first")
+    table.insert(date=date(2026, 6, 1), message="second")
+    table.insert(date=date(2026, 12, 1), message="third")
+    return table
+
+
+@pytest.mark.parametrize("index, remaining", [
+    (0, ["second", "third"]),
+    (1, ["first", "third"]),
+    (2, ["first", "second"]),     # last row: used to raise IndexError
+])
+def test_table_by_date_delete_row(index, remaining):
+    """Verifies delete_row deletes the selected row (not the one after it)."""
+    table = _three_logs()
+    rows = table.get_rows(None)          # sets the 1-based row_num, as table_screen does
+    table.delete_row(rows[index])
+    assert [row.message for row in table] == remaining
+
+
+def test_table_by_date_delete_row_after_insert():
+    """Verifies delete_row still finds the row when row_num is stale (rows added since get_rows)."""
+    table = _three_logs()
+    rows = table.get_rows(None)
+    table.insert(date=date(2025, 1, 1), message="new 1")   # shifts every row down two
+    table.insert(date=date(2025, 2, 1), message="new 2")
+    table.delete_row(rows[1])
+    assert [row.message for row in table] == ["new 1", "new 2", "first", "third"]
+
+
+def test_table_by_date_delete_row_not_in_table():
+    """Verifies delete_row raises rather than deleting some other row."""
+    table = _three_logs()
+    stranger = LogRow(date=date(2026, 6, 1), message="second")
+    with pytest.raises(ValueError):
+        table.delete_row(stranger)
+    assert len(table) == 3
+
+
+def test_table_by_date_add_row_fk_failure_leaves_table_unchanged():
+    """Verifies a row failing its foreign key check is not left in the table."""
+    load_rows([ItemRow, InventoryRow])
+    Tables["ItemRow"].insert(item="beans")
+    inventory = Tables["InventoryRow"]
+    inventory.insert(date=date(2026, 1, 1), item="beans")
+
+    with pytest.raises(ValueError, match="not in ItemRow"):
+        inventory.insert(date=date(2026, 2, 1), item="rice")
+    assert [row.item for row in inventory] == ["beans"]

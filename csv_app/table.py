@@ -222,15 +222,20 @@ class Table_by_date(Base_table, list):
         return self
 
     def add_row(self, row, skip_fk_check=False):
+        if not skip_fk_check:
+            row.check_foreign_keys(Tables, row.date, raise_exc=True)
         i = self.last_date(row.date)
        #print(f"{self.name}.add_row(date={row.date}), inserted at {i=}")
         list.insert(self, i, row)
-        if not skip_fk_check:
-            row.check_foreign_keys(Tables, row.date, raise_exc=True)
 
     def delete_row(self, row):
-        logger.info(f"{self.__class__.__name__}({self.name=}).delete_row({row.row_num=})")
-        del self[row.row_num]
+        logger.info(f"{self.__class__.__name__}({self.name=}).delete_row(row_num={getattr(row, 'row_num', None)})")
+        # find by identity: row_num is 1-based and may be stale if rows were added since get_rows
+        for i, r in enumerate(self):
+            if r is row:
+                del self[i]
+                return
+        raise ValueError(f"{self.name}.delete_row: row not in table")
 
     def values(self):
         return self

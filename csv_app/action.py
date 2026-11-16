@@ -125,6 +125,7 @@ class Note(Action):
         super().__init__(id)
         self.task = task
 
+    @property
     def can_run(self):
         return False
 
