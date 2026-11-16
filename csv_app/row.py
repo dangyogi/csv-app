@@ -27,6 +27,16 @@ def abbr_month(m):
     '''
     return Months_abbreviated[m]
 
+def decimal(s):
+    r'''Like Decimal(s), but raises ValueError (rather than decimal.InvalidOperation) for a bad value.
+
+    Use this as the `parse` for Decimal columns, since callers only catch ValueError.
+    '''
+    try:
+        return Decimal(s)
+    except InvalidOperation:
+        raise ValueError(f"{s!r} is not a valid number") from None
+
 Date_format = "%b %d, %y"               # Nov 03, 26
 Datetime_format = "%I:%M%p, %b %d, %y"  # 01:14pm, Nov 03, 26
 
@@ -76,10 +86,6 @@ class Column:
         self.edit_width = edit_width
         self.can_edit = can_edit
 
-    def validate(self, s):
-        if self.parse(s) is None and self.required:
-            raise ValueError(f"{self.name}: requires a value")
-
     def column_attr_pair(self, row):
         return None
 
@@ -95,10 +101,7 @@ class Column:
         s = csv_value.strip()
         if not s:
             return None
-        try:
-            return self.parse(s)
-        except InvalidOperation as e:
-            raise ValueError(str(e))
+        return self.parse(s)
 
     def parse(self, s):
         r'''Default parse.
@@ -473,7 +476,7 @@ class Row(metaclass=Row_metaclass):
 
 __all__ = "MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY " \
           "date datetime timedelta abbr_month Date_format Datetime_format " \
-          "Decimal Column Date_column Datetime_column Set_column Bool_column Row create_database_py".split()
+          "Decimal decimal Column Date_column Datetime_column Set_column Bool_column Row create_database_py".split()
 
 
 def create_database_py(Rows, table_module="tables"):

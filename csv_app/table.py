@@ -247,7 +247,7 @@ class Table_by_date(Base_table, list):
 Tables = {}
 
 
-__all__ = "Decimal date datetime timedelta abbr_month Date_format Datetime_format " \
+__all__ = "Decimal decimal date datetime timedelta abbr_month Date_format Datetime_format " \
           "Tables Table_unique Table_by_date check_foreign_keys run".split()
 
 

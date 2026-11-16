@@ -1,7 +1,7 @@
 # test_column.py
 
 import pytest
-from csv_app.row import date, Decimal, Column, Date_column, Set_column, Bool_column
+from csv_app.row import date, Decimal, decimal, Column, Date_column, Set_column, Bool_column
 
 
 @pytest.mark.parametrize("calculated, required, default, can_edit, set_default, set_can_edit", [
@@ -45,8 +45,8 @@ def test_init_errors(calculated, required, default, can_edit):
     (Column('an_int', parse=int), "12", 12),
     (Column('a_float', parse=float), "", None),
     (Column('a_float', parse=float), "1.2", 1.2),
-    (Column('a_float', parse=Decimal), "", None),
-    (Column('a_float', parse=Decimal), "1.2", Decimal("1.2")),
+    (Column('a_float', parse=decimal), "", None),
+    (Column('a_float', parse=decimal), "1.2", Decimal("1.2")),
     (Date_column('a_date'), "", None),
     (Date_column('a_date'), "Nov 2, 26", date(2026, 11, 2)),
     (Set_column('a_set'), "", None),
@@ -65,8 +65,8 @@ def test_to_python(column, csv_value, python_value):
     (Column('an_int', parse=int), "12a"),
     (Column('a_float', parse=float), "1.2.3"),
     (Column('a_float', parse=float), "1.2a"),
-    (Column('a_float', parse=Decimal), "12a"),
-    (Column('a_float', parse=Decimal), "1.2.3"),
+    (Column('a_float', parse=decimal), "12a"),
+    (Column('a_float', parse=decimal), "1.2.3"),
     (Date_column('a_date'), "Nav 2, 26"),
     (Date_column('a_date'), "Apr 31, 26"),
     (Date_column('a_date'), "Apr 1 26"),
@@ -86,8 +86,8 @@ def test_to_python_ValueError(column, csv_value):
     (Column('an_int', parse=int), 12, "12"),
     (Column('a_float', parse=float), None, ""),
     (Column('a_float', parse=float), 1.2, "1.2"),
-    (Column('a_float', parse=Decimal), None, ""),
-    (Column('a_float', parse=Decimal), Decimal("1.2"), "1.2"),
+    (Column('a_float', parse=decimal), None, ""),
+    (Column('a_float', parse=decimal), Decimal("1.2"), "1.2"),
     (Date_column('a_date'), None, ""),
     (Date_column('a_date'), date(2026, 11, 2), "Nov 2, 26"),
     (Set_column('a_set'), None, ""),
