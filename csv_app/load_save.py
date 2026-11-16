@@ -207,6 +207,8 @@ def save_database(csv_filename=None, test_name=None):
         for table in Tables.values():
             if table.row_class.in_database:
                 table.to_csv(new_fd, add_empty_row=True)
+    new_fd.flush()                           # get the new contents onto disk before it replaces
+    os.fsync(new_fd.fileno())                # csv_filename, so a crash can't leave it truncated
     save_filename = csv_filename + '-save'
     print_step(test_name, "exists-save")
     if os.path.exists(save_filename):
@@ -285,7 +287,7 @@ def run_test(script, kw=None, choices=(), database_filename="dummy.csv"):
     '''
     errors = 0
     if not choices:
-        if not run_script(script):
+        if not run_script(script, database_filename):
             errors += 1
     else:
         for choice in choices:
@@ -294,7 +296,7 @@ def run_test(script, kw=None, choices=(), database_filename="dummy.csv"):
             def sub():
                 for line in script:
                     yield line.format(**{kw: choice})
-            if run_script(sub()):
+            if run_script(sub(), database_filename):
                 print(f"run_test run_script: {choice} PASSED", file=sys.stderr)
             else:
                 print(f"run_test run_script: {choice} FAILED", file=sys.stderr)

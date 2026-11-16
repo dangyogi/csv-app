@@ -52,6 +52,7 @@ class Column:
     generally because the field is a foreign_key, which will restrict its values.
     '''
     alignment = 'left'
+    edit_width = None   # subclasses may override; an edit_width arg overrides both
 
     def __init__(self, name, abbr=None, hidden=False, required=False, calculated=False, 
                  parse=None, default=None, choices=None, selection_fn=None,
@@ -83,7 +84,8 @@ class Column:
         else:
             self.selection_fn = None
         self.min_width = min_width
-        self.edit_width = edit_width
+        if edit_width is not None:      # else keep the class attribute (e.g. Date_column's)
+            self.edit_width = edit_width
         self.can_edit = can_edit
 
     def column_attr_pair(self, row):

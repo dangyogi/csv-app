@@ -790,7 +790,7 @@ def run():
 
     args = parser.parse_args()
 
-    dump_table(args.table, args.pdf, args.size)
+    dump_table(args.table, args.pdf, default_fontsize=args.size)
 
 
 

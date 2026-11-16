@@ -98,3 +98,14 @@ def test_to_python_ValueError(column, csv_value):
 def test_to_csv(column, python_value, csv_value):
     #assert column.to_csv(column.to_python(csv_value)) == python_value
     assert column.to_python(csv_value) == python_value
+
+
+@pytest.mark.parametrize("column, edit_width", [
+    (Column('plain'), None),
+    (Column('note', edit_width=100), 100),
+    (Date_column('date'), len("Nov 11, 26")),
+    (Bool_column('flag'), len("False")),
+])
+def test_edit_width(column, edit_width):
+    """Verifies the class edit_width (Date_column, Bool_column) isn't overwritten by Column.__init__."""
+    assert column.edit_width == edit_width
