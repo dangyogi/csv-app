@@ -201,14 +201,14 @@ class Row_metaclass(type):
             dct['column_map'] = {col.name: col for col in dct['columns']}
             dct['stored_names'] = [col.name for col in dct['columns'] if not col.calculated]
             dct['required'] = frozenset(col.name for col in dct['columns'] if col.required)
-            assert dct.get('primary_key') is None or not dct.get('primary_keys', ()), \
+            assert dct.get('primary_key') is None or not dct.get('primary_keys'), \
                    f"Row {name} can't have both primary_key and primary_keys"
             has_key = False
             if dct.get('primary_key') is not None:
                 assert dct['primary_key'] in dct['column_map'], \
                        f"Row {name}, primary key {dct['primary_key']}: not a column"
                 has_key = True
-            for pkey in dct.get('primary_keys', ()):
+            for pkey in (dct.get('primary_keys') or ()):
                 assert pkey in dct['column_map'], f"Row {name}, {pkey} in primary_keys: not a column"
                 has_key = True
            #if not has_key and 'row_num' not in dct['column_map']:
@@ -220,9 +220,9 @@ class Row_metaclass(type):
                #print(f"Row_metaclass({name=}).__new__: "
                #      f"col_name={col_name}, {hasattr(col, 'can_edit')=}, {dct.get('primary_key', None)=}")
                 if col_name == dct.get('primary_key', None) or \
-                   col_name in dct.get('primary_keys', ()):
+                   col_name in (dct.get('primary_keys') or ()):
                     assert not col.calculated, f"Row {name}, primary key {col_name} can't be calculated"
-                    if dct.get('primary_keys', ()):
+                    if dct.get('primary_keys'):
                        #print(f"Row_metaclass({name=}).__new__: {col_name=}, {dct['primary_keys']=}, "
                        #      f"{col.required=}, {hasattr(col, 'default')=}")
                         assert col.required or hasattr(col, "default") and col.default is not None, \
