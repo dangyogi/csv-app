@@ -402,7 +402,7 @@ def run_script(script, database_filename="dummy.csv"):
             match cmd[0]:
                 case 'start':
                     processes[test_name] = subprocess.Popen(
-                                             args=["python", "-m", "csv_app.load_save",
+                                             args=[sys.executable, "-m", "csv_app.load_save",
                                                    "load_database", "-d", database_filename, test_name],
                                              stdin=subprocess.DEVNULL,
                                              stdout=subprocess.DEVNULL,
