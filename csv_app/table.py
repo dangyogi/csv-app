@@ -19,6 +19,9 @@ def align(value, width, alignment):
     return value + ' ' * (width - len(value))
 
 class Base_table:
+    table_popup_command_fns = ()   # names of methods on this (table) class to execute the commands.
+                                   # these methods take a single (tui) app parameter
+
     def __init__(self, row_class):
         self.row_class = row_class
         row_class.table = self
@@ -26,6 +29,7 @@ class Base_table:
     @property
     def screen_popup_commands(self):
         return tuple(table.name for table in Tables.values() if not table.row_class.omit) \
+             + tuple(self.table_popup_command_fns) \
              + self.row_class.table_popup_commands_end
 
     @property
@@ -42,6 +46,11 @@ class Base_table:
 
     def execute(self, command):
         logger_execute.info(f"{self.name=}.execute({command=})")
+        if command in self.table_popup_command_fns:
+            logger_execute.info(f"calling self.{command}")
+            ans = getattr(self, command)(get_app())
+            logger_execute.info(f"{self.name=}.execute: self.{command} -> {ans}")
+            return ans
         match command:
             case 'Print':
                 dump_table(self.name, pdf=True, load=False)

@@ -460,7 +460,7 @@ class Row(metaclass=Row_metaclass):
             logger_execute.info(f"Row({self.table_name=}).execute: {command=} unknown")
             raise ValueError(f"Row({self.table_name=}).execute: {command=} unknown")
         logger_execute.info(f"calling self.{command}")
-        ans = getattr(self, command)(get_app().screen)
+        ans = getattr(self, command)(get_app())      # row_popup_command_fns methods take the app
         logger_execute.info(f"self.{command} -> returning {ans}")
         return ans
 

@@ -151,3 +151,51 @@ def test_table_by_date_add_row_fk_failure_leaves_table_unchanged():
     with pytest.raises(ValueError, match="not in ItemRow"):
         inventory.insert(date=date(2026, 2, 1), item="rice")
     assert [row.item for row in inventory] == ["beans"]
+
+
+class FakeApp:
+    def __init__(self):
+        self.screen = object()
+
+
+class NoteRow(Row):
+    primary_key = "note_id"
+    row_popup_command_fns = "Shout",
+    columns = (
+        Column("note_id", required=True),
+    )
+
+    def Shout(self, app):
+        return ("shout", self.note_id, app)
+
+
+class NoteTable(Table_unique):
+    table_popup_command_fns = "Purge",
+
+    def Purge(self, app):
+        return ("purge", self.name, app)
+
+NoteTable.__name__ = "NoteRow"     # load_rows matches custom table classes to rows by name
+
+
+def test_row_popup_command_fn_gets_app(monkeypatch):
+    """Verifies Row.execute passes the app (not the screen) to row_popup_command_fns methods."""
+    from csv_app import row as row_module
+    app = FakeApp()
+    monkeypatch.setattr(row_module, "get_app", lambda: app)
+    load_rows([NoteRow])
+    Tables["NoteRow"].insert(note_id="n1")
+    assert Tables["NoteRow"]["n1"].execute("Shout") == ("shout", "n1", app)
+
+
+def test_table_popup_command_fns_listed_and_dispatched(monkeypatch):
+    """Verifies table_popup_command_fns appear in screen_popup_commands and run with the app."""
+    from csv_app import table as table_module
+    app = FakeApp()
+    monkeypatch.setattr(table_module, "get_app", lambda: app)
+    load_rows([NoteRow], NoteTable)
+    table = Tables["NoteRow"]
+    assert isinstance(table, NoteTable)
+    assert table.screen_popup_commands == ("NoteRow", "Purge", "Create", "Print")
+    assert table.execute("Purge") == ("purge", "NoteRow", app)
+    assert table.execute("Unknown") == "Continue"
